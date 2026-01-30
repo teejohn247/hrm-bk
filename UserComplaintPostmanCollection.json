@@ -1,0 +1,685 @@
+{
+	"info": {
+		"_postman_id": "cf8b2c75-f6a1-4c8e-91de-5d2a3f4e9d63",
+		"name": "User Complaint API Tests",
+		"description": "A collection for testing the User Complaint API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Sign In (Employee)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    console.log(\"Auth token set successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/signIn",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"signIn"
+							]
+						},
+						"description": "Authenticate as a regular employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In (Company Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"companyAuthToken\", jsonData.token);",
+									"    console.log(\"Company auth token set successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{companyEmail}}\",\n    \"password\": \"{{companyPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/signIn",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"signIn"
+							]
+						},
+						"description": "Authenticate as a company admin account"
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In (SuperAdmin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"superAdminAuthToken\", jsonData.token);",
+									"    console.log(\"SuperAdmin auth token set successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{superAdminEmail}}\",\n    \"password\": \"{{superAdminPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/signIn",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"signIn"
+							]
+						},
+						"description": "Authenticate as a super admin account"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints to get token for API access"
+		},
+		{
+			"name": "User Complaints",
+			"item": [
+				{
+					"name": "Upload Screenshot",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.success === true && jsonData.data.screenshotUrl) {",
+									"    pm.environment.set(\"screenshotUrl\", jsonData.data.screenshotUrl);",
+									"    console.log(\"Screenshot URL saved: \" + jsonData.data.screenshotUrl);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"image\": \"https://example.com/sample-screenshot.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/upload-screenshot",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints",
+								"upload-screenshot"
+							]
+						},
+						"description": "Upload a screenshot for a complaint"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complaint (Employee)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 201 && jsonData.success === true) {",
+									"    // Extract the complaint ID from the response if available",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set(\"complaintId\", jsonData.data.id);",
+									"        console.log(\"Complaint ID saved: \" + jsonData.data.id);",
+									"    }",
+									"    ",
+									"    // Test for successful creation",
+									"    pm.test(\"Complaint created successfully\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.message).to.include(\"submitted successfully\");",
+									"    });",
+									"    ",
+									"    // Test createdByRole is 'employee'",
+									"    pm.test(\"Complaint created by employee\", function() {",
+									"        pm.expect(jsonData.data.userRole).to.equal('employee');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"The dashboard is not loading properly when I log in\",\n    \"issueCategory\": \"Technical Issue\",\n    \"screenshot\": \"{{screenshotUrl}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints"
+							]
+						},
+						"description": "Create a new user complaint as a regular employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complaint (Company Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 201 && jsonData.success === true) {",
+									"    // Extract the complaint ID from the response if available",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set(\"companyComplaintId\", jsonData.data.id);",
+									"        console.log(\"Company complaint ID saved: \" + jsonData.data.id);",
+									"    }",
+									"    ",
+									"    // Test for successful creation",
+									"    pm.test(\"Complaint created successfully by company admin\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.message).to.include(\"submitted successfully\");",
+									"    });",
+									"    ",
+									"    // Test createdByRole is 'admin' or 'superadmin'",
+									"    pm.test(\"Complaint created by admin or superadmin\", function() {",
+									"        pm.expect(['admin', 'superadmin']).to.include(jsonData.data.userRole);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{companyAuthToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Company admin reporting: API performance is degraded\",\n    \"issueCategory\": \"Performance Issue\",\n    \"screenshot\": \"{{screenshotUrl}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints"
+							]
+						},
+						"description": "Create a new user complaint as a company admin"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complaint (SuperAdmin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 201 && jsonData.success === true) {",
+									"    // Extract the complaint ID from the response if available",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set(\"superAdminComplaintId\", jsonData.data.id);",
+									"        console.log(\"SuperAdmin complaint ID saved: \" + jsonData.data.id);",
+									"    }",
+									"    ",
+									"    // Test for successful creation",
+									"    pm.test(\"Complaint created successfully by superadmin\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.message).to.include(\"submitted successfully\");",
+									"    });",
+									"    ",
+									"    // Test createdByRole is 'superadmin'",
+									"    pm.test(\"Complaint created by superadmin\", function() {",
+									"        pm.expect(jsonData.data.userRole).to.equal('superadmin');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{superAdminAuthToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"SuperAdmin reporting: Database connectivity issues\",\n    \"issueCategory\": \"System Error\",\n    \"screenshot\": \"{{screenshotUrl}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints"
+							]
+						},
+						"description": "Create a new user complaint as a superadmin"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Complaints",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 200 && jsonData.success === true) {",
+									"    // If there are complaints in the response, save the first one's ID",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        pm.environment.set(\"complaintId\", jsonData.data[0].id);",
+									"        console.log(\"First complaint ID saved: \" + jsonData.data[0].id);",
+									"    }",
+									"    ",
+									"    // Test for successful retrieval",
+									"    pm.test(\"Complaints retrieved successfully\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.data).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // Test that createdByRole is included",
+									"    pm.test(\"Complaints include createdByRole\", function() {",
+									"        if (jsonData.data.length > 0) {",
+									"            pm.expect(jsonData.data[0]).to.have.property('createdByRole');",
+									"            pm.expect(['employee', 'admin', 'superadmin']).to.include(jsonData.data[0].createdByRole);",
+									"        }",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "pending",
+									"disabled": true
+								},
+								{
+									"key": "issueCategory",
+									"value": "Technical Issue",
+									"disabled": true
+								},
+								{
+									"key": "createdByRole",
+									"value": "superadmin",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all user complaints with pagination and optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Complaints by Role",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"var roleFilter = pm.request.url.query.find(q => q.key === 'createdByRole').value;",
+									"",
+									"if (jsonData.status === 200 && jsonData.success === true) {",
+									"    // Test for successful retrieval",
+									"    pm.test(\"Complaints retrieved successfully\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.data).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // Test that only complaints with the specified role are returned",
+									"    pm.test(`Only ${roleFilter} complaints are returned`, function() {",
+									"        if (jsonData.data.length > 0) {",
+									"            jsonData.data.forEach(complaint => {",
+									"                pm.expect(complaint.createdByRole).to.equal(roleFilter);",
+									"            });",
+									"        }",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{superAdminAuthToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints?createdByRole=superadmin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints"
+							],
+							"query": [
+								{
+									"key": "createdByRole",
+									"value": "superadmin"
+								}
+							]
+						},
+						"description": "Get complaints filtered by createdByRole"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Complaint by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 200 && jsonData.success === true) {",
+									"    pm.test(\"Complaint retrieved successfully\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.data).to.be.an('object');",
+									"    });",
+									"    ",
+									"    // Test that createdByRole is included",
+									"    pm.test(\"Complaint includes createdByRole\", function() {",
+									"        pm.expect(jsonData.data).to.have.property('createdByRole');",
+									"        pm.expect(['employee', 'admin', 'superadmin']).to.include(jsonData.data.createdByRole);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/{{complaintId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints",
+								"{{complaintId}}"
+							]
+						},
+						"description": "Get a specific complaint by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Complaint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"if (jsonData.status === 200 && jsonData.success === true) {",
+									"    pm.test(\"Complaint updated successfully\", function() {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData.message).to.include(\"updated successfully\");",
+									"    });",
+									"    ",
+									"    // Test that createdByRole is preserved",
+									"    pm.test(\"Complaint maintains createdByRole\", function() {",
+									"        pm.expect(jsonData.data).to.have.property('createdByRole');",
+									"        pm.expect(['employee', 'admin', 'superadmin']).to.include(jsonData.data.createdByRole);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Updated: The dashboard is loading very slowly after login\",\n    \"issueCategory\": \"Performance Issue\",\n    \"status\": \"in-progress\",\n    \"resolution\": \"Investigating server performance issues\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/{{complaintId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints",
+								"{{complaintId}}"
+							]
+						},
+						"description": "Update an existing complaint"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Complaint",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/{{complaintId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"complaints",
+								"{{complaintId}}"
+							]
+						},
+						"description": "Delete (soft-delete) a complaint"
+					},
+					"response": []
+				}
+			],
+			"description": "User complaint CRUD operations"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+} 

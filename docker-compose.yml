@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:8080"
+      - "443:8080"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URL=mongodb+srv://dev:aCeHr1234@acehr.phurqzy.mongodb.net/greenpeg?retryWrites=true&w=majority&appName=Acehr
