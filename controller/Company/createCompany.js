@@ -78,7 +78,7 @@ const createCompany = async (req, res) => {
         //     });
         // }
         
-        // const fullSubdomain = `${subdomain.prefix}.acehr.app`;
+        // const fullSubdomain = `${subdomain.prefix}.ace-hrm-1086159474664.europe-west1.run.app`;
         
         // Get modules and transform them
         const modules = await Module.find({ companyId: req.payload.id });

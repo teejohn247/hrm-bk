@@ -104,7 +104,7 @@ app.get('/test', async (req, res) => {
     
             <p style="font-size: 16px; text-align: left !important; font-weight: 300;">
     
-            You have been invited to join <a href="https://www.acehr.app/set-password">greenpeg ERP Platform</a> as an employee 
+            You have been invited to join <a href="https://www.ace-hrm-1086159474664.europe-west1.run.app/set-password">greenpeg ERP Platform</a> as an employee 
     
             <br><br>
             </p>

@@ -36,7 +36,7 @@ const forgotPassword = async (req, res) => {
 		  
 				  Please, complete your reset your password using this link
 				  <br>
-						  <a href="https://www.acehr.app/set-password/${token}"><button>Reset Password</button></a>
+						  <a href="https://www.ace-hrm-1086159474664.europe-west1.run.app/set-password/${token}"><button>Reset Password</button></a>
 				  <br><br>
 				  </p>
 				  <div>`;
@@ -77,7 +77,7 @@ const forgotPassword = async (req, res) => {
 		  
 				  Please, complete your reset your password using this link
 				  <br>
-						  <a href="https://www.acehr.app/set-password/${token}"><button>Reset Password</button></a>
+						  <a href="https://www.ace-hrm-1086159474664.europe-west1.run.app/set-password/${token}"><button>Reset Password</button></a>
 				  <br><br>
 				  </p>
 				  <div>`;
