@@ -56,7 +56,6 @@ const CompanySchema = new mongoose.Schema({
     ],
     subDomain: { 
         type: String,
-        unique: true,
     },
     companyFeatures: {
             subscriptionStatus: {
