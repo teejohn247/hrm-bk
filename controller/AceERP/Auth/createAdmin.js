@@ -15,7 +15,7 @@ sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const generatePasswordForAceERP = async (req, res) => {
     try {
-        const email = 'aceerp@aceall.io';
+        const email = 'erp@makersorbit.com';
         const randomBytes = crypto.randomBytes(12).toString('hex');
         const specialChars = '!@#$%^&*';
         const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -42,7 +42,7 @@ const generatePasswordForAceERP = async (req, res) => {
         } else {
             // Create new company if it doesn't exist
             company = new Company({
-                companyName: 'AceERP',
+                companyName: 'Makers ERP',
                 email,
                 password: hashedPassword,
             });
@@ -61,7 +61,7 @@ const generatePasswordForAceERP = async (req, res) => {
 
         <p style="font-size: 16px; text-align:left !important; font-weight: 300;">
 
-        A password has been generated for your AceERP account.
+        A password has been generated for your Makers ERP account.
         Below is your password: 
         <br>
         <br>
@@ -74,10 +74,10 @@ const generatePasswordForAceERP = async (req, res) => {
         <div>`
 
 
-        let resp = emailTemp(data, 'AceERP Password')
+        let resp = emailTemp(data, 'Makers ERP Password')
         console.log({resp})
 
-        await sendEmail(req, res, email, receivers, 'AceERP Password', resp);
+        await sendEmail(req, res, email, receivers, 'Makers ERP Password', resp);
 
         res.status(200).json({
             status: 200,
