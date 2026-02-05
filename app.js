@@ -18,13 +18,13 @@ import cron from 'node-cron';
 import { updateSubscriptionStatuses } from './utils/subscriptionStatusManager';
 // Swagger imports (optional - only if package is installed)
 let swaggerUi, swaggerJsdoc;
-try {
-  swaggerUi = require('swagger-ui-express');
-  swaggerJsdoc = require('swagger-jsdoc');
-} catch (error) {
-  console.log('Swagger packages not installed. API docs will not be available.');
-  console.log('To enable Swagger, run: npm install swagger-jsdoc --save');
-}
+// try {
+//   swaggerUi = require('swagger-ui-express');
+//   swaggerJsdoc = require('swagger-jsdoc');
+// } catch (error) {
+//   console.log('Swagger packages not installed. API docs will not be available.');
+//   console.log('To enable Swagger, run: npm install swagger-jsdoc --save');
+// }
 
 const upload = multer()
 const app = express();
@@ -202,6 +202,15 @@ app.post('/create-subdomain', async (req, res) => {
 app.use('/api/v1', userRouter);
 
 server.listen(port, () => console.log(`Server has started. ${port}`))
+
+// server.listen(port, () => {
+//   console.log(`Server has started. ${port}`)
+//   if (swaggerUi && swaggerJsdoc) {
+//     console.log(`Swagger UI available at: http://localhost:${port}/api-docs`)
+//   } else {
+//     console.log(`To enable Swagger UI, run: npm install swagger-jsdoc --save`)
+//   }
+// })
 export default app;
 
 // Run every day at midnight

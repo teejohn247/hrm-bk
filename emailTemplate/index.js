@@ -45,7 +45,7 @@ export const emailTemp = (data, subject) => {
 
                                     <div style="padding: 20px 0;">
                                         <p style="margin: 10px 0;">Thank you,</p>
-                                        <p style="margin: 0; color: #808080;">AceHR Team</p>
+                                        <p style="margin: 0; color: #808080;">Makers ERP Team</p>
                                     </div>
                                 </td>
                             </tr>
