@@ -298,6 +298,30 @@ import {
 
 import managerLeaveStats from '../controller/Leave/managerLeaveStats';
 
+// Import Announcement controllers
+import createAnnouncement from '../controller/Announcement/createAnnouncement';
+import fetchAnnouncements from '../controller/Announcement/fetchAnnouncements';
+import fetchAnnouncementById from '../controller/Announcement/fetchAnnouncementById';
+import updateAnnouncement from '../controller/Announcement/updateAnnouncement';
+import deleteAnnouncement from '../controller/Announcement/deleteAnnouncement';
+
+// Import Branch controllers
+import createBranch from '../controller/Branch/createBranch';
+import fetchBranches from '../controller/Branch/fetchBranches';
+import fetchBranchById from '../controller/Branch/fetchBranchById';
+import updateBranch from '../controller/Branch/updateBranch';
+import deleteBranch from '../controller/Branch/deleteBranch';
+import addEmployeeToBranch from '../controller/Branch/addEmployeeToBranch';
+import removeEmployeeFromBranch from '../controller/Branch/removeEmployeeFromBranch';
+
+// Import HelpSupport controllers
+import createTicket from '../controller/HelpSupport/createTicket';
+import fetchTickets from '../controller/HelpSupport/fetchTickets';
+import fetchTicketById from '../controller/HelpSupport/fetchTicketById';
+import updateTicket from '../controller/HelpSupport/updateTicket';
+import addMessageToTicket from '../controller/HelpSupport/addMessageToTicket';
+import deleteTicket from '../controller/HelpSupport/deleteTicket';
+
 const { userValidationRules, validate } = require('../middleware/signUpValidation')
 const multer = require("multer");
 const mult = multer({ dest: "uploads/" });
@@ -844,6 +868,30 @@ router.delete('/complaints/:id', auth, deleteComplaint);
 router.post('/complaints/upload-screenshot', auth, uploadScreenshot);
 
 router.get('/managerLeaveStats', auth, managerLeaveStats);
+
+// Announcement routes
+router.post('/announcements', auth, createAnnouncement);
+router.get('/announcements', auth, fetchAnnouncements);
+router.get('/announcements/:id', auth, fetchAnnouncementById);
+router.patch('/announcements/:id', auth, updateAnnouncement);
+router.delete('/announcements/:id', auth, deleteAnnouncement);
+
+// Branch routes
+router.post('/branches', auth, createBranch);
+router.get('/branches', auth, fetchBranches);
+router.get('/branches/:id', auth, fetchBranchById);
+router.patch('/branches/:id', auth, updateBranch);
+router.delete('/branches/:id', auth, deleteBranch);
+router.post('/branches/:branchId/employees', auth, addEmployeeToBranch);
+router.delete('/branches/:branchId/employees/:employeeId', auth, removeEmployeeFromBranch);
+
+// HelpSupport routes
+router.post('/support-tickets', auth, createTicket);
+router.get('/support-tickets', auth, fetchTickets);
+router.get('/support-tickets/:id', auth, fetchTicketById);
+router.patch('/support-tickets/:id', auth, updateTicket);
+router.post('/support-tickets/:id/messages', auth, addMessageToTicket);
+router.delete('/support-tickets/:id', auth, deleteTicket);
 
 
 export default router;

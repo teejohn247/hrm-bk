@@ -54,7 +54,7 @@ const signUp = async (req, res) => {
 
         <p style="font-size: 16px; text-align:left !important; font-weight: 300;">
 
-        Click on this link to complete your registration process <a href="https://www.ace-hrm-1086159474664.europe-west1.run.app/app/${token}">Ace ERP Platform</a> as an employee 
+        Click on this link to complete your registration process <a href="https://makers-hrm-1086159474664.europe-west1.run.app/app/${token}">Makers ERP Platform</a> as an employee 
 
         <br><br>
         </p>

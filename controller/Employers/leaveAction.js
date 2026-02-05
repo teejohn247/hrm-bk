@@ -260,16 +260,17 @@ try {
     // Send email notification
     await sendEmail(req, res, check.email, receivers, 'Leave Application Notification', resp);
     
-    // Optional: Create notification
-    // let notification = new Notification({
-    //   created_by: req.payload.id,
-    //   companyName: check.companyName,
-    //   companyId: check.companyId,
-    //   recipientId: check._id,
-    //   notificationType: `Leave Application`,
-    //   notificationContent: ` Your leave request has been ${approved == true ? "Approved" : "Declined"}`
-    // });
-    // await notification.save();
+    // Create notification for employee
+    let notification = new Notification({
+      created_by: req.payload.id,
+      companyName: check.companyName,
+      companyId: check.companyId,
+      recipientId: check._id.toString(),
+      notificationType: `Leave ${approved ? "Approved" : "Declined"}`,
+      notificationContent: `Your leave request from ${formattedStartDate} to ${formattedEndDate} has been ${approved ? "approved" : "declined"}. ${decisionMessage ? "Decision: " + decisionMessage : ""}`,
+      read: false
+    });
+    await notification.save();
     
     // Return success response
     res.status(200).json({

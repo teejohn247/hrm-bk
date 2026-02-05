@@ -12,6 +12,7 @@ import LeaveRecords from '../../model/LeaveRecords';
 import Leave from '../../model/Leaves'
 import { sendEmail } from '../../config/email';
 import Holidays from '../../model/Holidays';
+import Notification from '../../model/Notification';
 import { parseDate, formatDateDDMMYYYY } from '../../utils/dateUtils';
 const { differenceInDays, addDays, isSaturday, isSunday, isSameDay } = require('date-fns');
 
@@ -304,6 +305,18 @@ const leaveApplication = async (req, res) => {
             // Send email to manager
             await sendEmail(req, res, checkManager.email, receivers, 'Leave Application Notification', resp);
 
+            // Create notification for manager
+            let managerNotification = new Notification({
+              notificationType: 'Leave Request',
+              notificationContent: `${check.firstName || check.fullName} has requested leave from ${formattedStartDate} to ${formattedEndDate}`,
+              recipientId: checkManager._id.toString(),
+              companyName: check.companyName,
+              companyId: check.companyId,
+              created_by: req.payload.id,
+              read: false
+            });
+            await managerNotification.save();
+
             // Prepare employee notification email
             let employeeData = `<div>
               <p style="padding: 32px 0; text-align: left !important; font-weight: 700; font-size: 20px;font-family: 'DM Sans';">
@@ -328,6 +341,18 @@ const leaveApplication = async (req, res) => {
 
             // Send email to employee
             await sendEmail(req, res, check.email, receiverEmployee, 'Leave Application Notification', respEmployee);
+
+            // Create notification for employee
+            let employeeNotification = new Notification({
+              notificationType: 'Leave Request Submitted',
+              notificationContent: `Your leave request from ${formattedStartDate} to ${formattedEndDate} has been submitted and is pending approval`,
+              recipientId: check._id.toString(),
+              companyName: check.companyName,
+              companyId: check.companyId,
+              created_by: req.payload.id,
+              read: false
+            });
+            await employeeNotification.save();
             
             // Update employee record with leave information
             await Employee.findOneAndUpdate(
