@@ -60,10 +60,12 @@ const fetchLeaves= async (req, res) => {
     
             return;
         }else{
-            res.status(400).json({
-                status: 400,
-                success: false,
-                data: "Leave doesnot exist",
+            res.status(200).json({
+                status: 200,
+                success: true,
+                data: [],
+                totalPages: 0,
+                currentPage: page
             })
     
             return;
