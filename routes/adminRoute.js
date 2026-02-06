@@ -881,10 +881,10 @@ router.post('/complaints/upload-screenshot', auth, uploadScreenshot);
 router.get('/managerLeaveStats', auth, managerLeaveStats);
 
 // Announcement routes
-router.post('/announcements', auth, createAnnouncement);
+router.post('/announcements', auth, upload.single('attachments'),imageUploader, createAnnouncement);
 router.get('/announcements', auth, fetchAnnouncements);
 router.get('/announcements/:id', auth, fetchAnnouncementById);
-router.patch('/announcements/:id', auth, updateAnnouncement);
+router.patch('/announcements/:id', auth, upload.single('attachments'),imageUploader, updateAnnouncement);
 router.delete('/announcements/:id', auth, deleteAnnouncement);
 
 // Branch routes
