@@ -323,7 +323,8 @@ import addMessageToTicket from '../controller/HelpSupport/addMessageToTicket';
 import deleteTicket from '../controller/HelpSupport/deleteTicket';
 
 // Import Notification controllers
-// import fetchNotifications from '../controller/Notification/fetchNotifications';
+import fetchNotifications from '../controller/Notification/fetchNotifications';
+import readNotification from '../controller/Notification/readNotification';
 // // import fetchNotificationById from '../controller/Notification/';
 // import updateNotification from '../controller/Notification/editNotifications';
 // import deleteNotification from '../controller/Notification/deleteNotification';
@@ -902,6 +903,16 @@ router.get('/support-tickets/:id', auth, fetchTicketById);
 router.patch('/support-tickets/:id', auth, updateTicket);
 router.post('/support-tickets/:id/messages', auth, addMessageToTicket);
 router.delete('/support-tickets/:id', auth, deleteTicket);
+
+// Notification routes
+router.get('/notifications', auth, fetchNotifications);
+router.patch('/markAsRead/:id', auth, readNotification);
+// router.get('/notifications/:id', auth, fetchNotificationById);
+// router.patch('/notifications/:id', auth, updateNotification);
+// router.delete('/notifications/:id', auth, deleteNotification);
+// router.get('/notifications/employee/:employeeId', auth, fetchNotificationByEmployeeId);
+// router.get('/notifications/company/:companyId', auth, fetchNotificationByCompanyId);
+// router.get('/notifications/admin/:adminId', auth, fetchNotificationByAdminId);
 
 
 export default router;
