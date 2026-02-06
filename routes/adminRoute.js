@@ -904,14 +904,4 @@ router.post('/support-tickets/:id/messages', auth, addMessageToTicket);
 router.delete('/support-tickets/:id', auth, deleteTicket);
 
 
-// Notification routes
-// router.get('/notifications', auth, fetchNotifications);
-// router.get('/notifications/:id', auth, fetchNotificationById);
-// router.patch('/notifications/:id', auth, updateNotification);
-// router.delete('/notifications/:id', auth, deleteNotification);
-// router.get('/notifications/employee/:employeeId', auth, fetchNotificationByEmployeeId);
-// router.get('/notifications/company/:companyId', auth, fetchNotificationByCompanyId);
-// router.get('/notifications/admin/:adminId', auth, fetchNotificationByAdminId);
-
-
 export default router;

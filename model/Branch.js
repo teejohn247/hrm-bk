@@ -34,6 +34,10 @@ const BranchSchema = new mongoose.Schema({
         managerId: { type: String },
         managerName: { type: String }
     },
+    branchAdmin: {
+        adminId: { type: String },
+        adminName: { type: String }
+    },
     employees: [{
         employeeId: { type: String },
         employeeName: { type: String }

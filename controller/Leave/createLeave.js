@@ -74,82 +74,88 @@ const createLeave = async (req, res) => {
 
         console.log({leaveTypes});
 
-
-        Designation.updateMany(
-          { companyId: req.payload.id },
-          {
-            $push: {
-              leaveTypes: {
-                $each: leaveTypes,
-              },
-            },
-          },
-          async function (err, result) {
-            if (err) {
-              return res.status(401).json({
-                status: 401,
-                success: false,
-                error: err,
-              });
-            }
-
-            try {
-              console.log({ result });
-
-              const updatedDesignationIds = await Designation.find(
-                { companyId: req.payload.id },
-                "_id"
-              );
-              console.log({ updatedDesignationIds });
-
-              // Fetch all employees within the company with the updated designations
-              const employees = await Employee.find({
-                companyId: req.payload.id,
-                designationId: {
-                  $in: updatedDesignationIds.map(
-                    (designation) => designation._id
-                  ),
-                },
-              });
-
-              console.log({ employees });
-              // Update leaveAssignment for each employee
-              for (const employee of employees) {
-                employee.leaveAssignment.push({
-                  leaveTypeId: adm._id,
-                  leaveName: adm.leaveName,
-                  noOfLeaveDays: adm.noOfLeaveDays,
-                  noOfLeaveDays: 0,
-                  daysLeft: 0,
-                  description: adm.description,
-                });
-                await employee.save();
-              }
-            } catch (error) {
-              console.error(error);
-              return res.status(400).json({
-                status: 400,
-                success: false,
-                error: error.message,
-              });
-            }
-
-            // Return success response after processing all documents
-            res.status(200).json({
-              status: 200,
-              success: true,
-              data: "Update Successful",
-            });
-          }
-        );
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).json({
-          status: 400,
-          success: false,
-          error: err,
+        return res.status(200).json({
+          status: 200,
+          success: true,
+          data: "Leave created successfully",
         });
+
+
+      //   Designation.updateMany(
+      //     { companyId: req.payload.id },
+      //     {
+      //       $push: {
+      //         leaveTypes: {
+      //           $each: leaveTypes,
+      //         },
+      //       },
+      //     },
+      //     async function (err, result) {
+      //       if (err) {
+      //         return res.status(401).json({
+      //           status: 401,
+      //           success: false,
+      //           error: err,
+      //         });
+      //       }
+
+      //       try {
+      //         console.log({ result });
+
+      //         const updatedDesignationIds = await Designation.find(
+      //           { companyId: req.payload.id },
+      //           "_id"
+      //         );
+      //         console.log({ updatedDesignationIds });
+
+      //         // Fetch all employees within the company with the updated designations
+      //         const employees = await Employee.find({
+      //           companyId: req.payload.id,
+      //           designationId: {
+      //             $in: updatedDesignationIds.map(
+      //               (designation) => designation._id
+      //             ),
+      //           },
+      //         });
+
+      //         console.log({ employees });
+      //         // Update leaveAssignment for each employee
+      //         for (const employee of employees) {
+      //           employee.leaveAssignment.push({
+      //             leaveTypeId: adm._id,
+      //             leaveName: adm.leaveName,
+      //             noOfLeaveDays: adm.noOfLeaveDays,
+      //             noOfLeaveDays: 0,
+      //             daysLeft: 0,
+      //             description: adm.description,
+      //           });
+      //           await employee.save();
+      //         }
+      //       } catch (error) {
+      //         console.error(error);
+      //         return res.status(400).json({
+      //           status: 400,
+      //           success: false,
+      //           error: error.message,
+      //         });
+      //       }
+
+      //       // Return success response after processing all documents
+      //       res.status(200).json({
+      //         status: 200,
+      //         success: true,
+      //         data: "Update Successful",
+      //       });
+      //     }
+      //   );
+      // })
+      // .catch((err) => {
+      //   console.error(err);
+      //   res.status(400).json({
+      //     status: 400,
+      //     success: false,
+      //     error: err,
+      //   });
       });
   } catch (error) {
     res.status(500).json({
