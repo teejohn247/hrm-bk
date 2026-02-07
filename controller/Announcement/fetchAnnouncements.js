@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import Announcement from '../../model/Announcement';
 import Employee from '../../model/Employees';
+import Company from '../../model/Company';
 
 dotenv.config();
 
@@ -10,30 +11,48 @@ const fetchAnnouncements = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get user details to check if admin or employee
-        const user = await Employee.findOne({ _id: req.payload.id });
+        const userId = req.payload.id;
         const companyId = req.payload.companyId || req.payload.id;
 
-        if (!user) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                error: 'User not found'
-            });
+        // Check if user is a company account (not an employee)
+        const company = await Company.findOne({ _id: userId });
+        const isCompanyAccount = !!company;
+
+        // If not a company account, check if they're an employee
+        let user = null;
+        let isSuperAdmin = false;
+
+        if (!isCompanyAccount) {
+            user = await Employee.findOne({ _id: userId });
+            
+            if (!user) {
+                return res.status(404).json({
+                    status: 404,
+                    success: false,
+                    error: 'User not found'
+                });
+            }
+
+            isSuperAdmin = user.isSuperAdmin;
         }
 
-        // Base query - company and active status
+        // Base query - company only
         let query = { 
-            companyId: companyId.toString(),
-            isActive: true
+            companyId: companyId.toString()
         };
 
-        // Build $and array for combining multiple conditions
-        const conditions = [];
+        // If user is company account OR super admin, they see ALL announcements
+        if (isCompanyAccount || isSuperAdmin) {
+            console.log(`Admin access (Company: ${isCompanyAccount}, SuperAdmin: ${isSuperAdmin}): fetching all announcements`);
+            // No additional filters - they see everything
+        } else {
+            // Regular employees see only active, non-expired announcements targeted to them
+            const conditions = [];
 
-        // 1. Filter by announcement type and target audience
-        if (!user.isSuperAdmin) {
-            // Regular employees only see announcements targeted to them
+            // 1. Only active announcements
+            query.isActive = true;
+
+            // 2. Filter by announcement type and target audience
             conditions.push({
                 $or: [
                     { announcementType: 'all' },
@@ -47,21 +66,20 @@ const fetchAnnouncements = async (req, res) => {
                     }
                 ]
             });
-        }
-        // If super admin, they see all announcements (no filter needed)
 
-        // 2. Filter out expired announcements
-        conditions.push({
-            $or: [
-                { expiryDate: { $exists: false } },
-                { expiryDate: null },
-                { expiryDate: { $gte: new Date() } }
-            ]
-        });
+            // 3. Filter out expired announcements
+            conditions.push({
+                $or: [
+                    { expiryDate: { $exists: false } },
+                    { expiryDate: null },
+                    { expiryDate: { $gte: new Date() } }
+                ]
+            });
 
-        // Combine all conditions with $and
-        if (conditions.length > 0) {
-            query.$and = conditions;
+            // Combine all conditions with $and
+            if (conditions.length > 0) {
+                query.$and = conditions;
+            }
         }
 
         const announcements = await Announcement.find(query)
@@ -71,7 +89,11 @@ const fetchAnnouncements = async (req, res) => {
 
         const totalCount = await Announcement.countDocuments(query);
 
-        console.log(`Fetched ${announcements.length} announcements for user ${user.fullName || user.email}`);
+        const userName = isCompanyAccount 
+            ? company.companyName 
+            : (user.fullName || user.email);
+
+        console.log(`Fetched ${announcements.length} announcements for ${userName}`);
 
         return res.status(200).json({
             status: 200,
