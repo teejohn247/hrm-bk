@@ -1,37 +1,21 @@
 import dotenv from 'dotenv';
 import Employee from '../../model/Employees';
-import EmployeeTable from '../../model/EmployeeTable';
-
-import Roles from '../../model/Roles';
-
-
-import utils from '../../config/utils';
-
-import { emailTemp } from '../../emailTemplate';
 import LeaveRecords from '../../model/LeaveRecords';
 import Company from '../../model/Company';
 
-
-
-const sgMail = require('@sendgrid/mail')
-
 dotenv.config();
 
-
-sgMail.setApiKey(process.env.SENDGRID_KEY);
-
-
-
+/**
+ * Get leave records for admin (with filters and pagination)
+ * Shows records the admin can approve OR all company records if super admin
+ */
 const getAdminRecords = async (req, res) => {
-
     try {
-
-        const { 
-            page, 
-            limit, 
+        const {
+            page = 1,
+            limit = 10,
             firstName,
             lastName,
-            fullName,
             leaveTypeName,
             status,
             department,
@@ -40,75 +24,101 @@ const getAdminRecords = async (req, res) => {
             approved
         } = req.query;
 
-        const comp = await Employee.findOne({_id: req.payload.id})
-        const allComp = await Company.findOne({_id: req.payload.id})
+        const userId = req.payload.id;
 
-        console.log({comp})
-        console.log({allComp})
+        // Parse and validate pagination
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
 
-        // Build filter object
-        let filterQuery = {};
-        
-        if (firstName) filterQuery.firstName = { $regex: firstName, $options: 'i' };
-        if (lastName) filterQuery.lastName = { $regex: lastName, $options: 'i' };
-        if (leaveTypeName) filterQuery.leaveTypeName = leaveTypeName;
-        if (status) filterQuery.status = status;
-        if (department) filterQuery.department = department;
-        if (approved !== undefined) filterQuery.approved = approved === 'true';
-        
+        // Check if user is employee or company (parallel queries)
+        const [employee, company] = await Promise.all([
+            Employee.findById(userId).select('companyId').lean(),
+            Company.findById(userId).select('_id').lean()
+        ]);
+
+        // Build filter query
+        const filterQuery = {};
+
+        // Determine company filter based on user type
+        if (employee) {
+            // Regular employee - only see records they can approve
+            filterQuery.companyId = employee.companyId;
+            filterQuery.leaveApprover = userId;
+        } else if (company) {
+            // Super admin - see all company records
+            filterQuery.companyId = userId;
+        } else {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Add search filters
+        if (firstName) {
+            filterQuery.firstName = { $regex: firstName, $options: 'i' };
+        }
+        if (lastName) {
+            filterQuery.lastName = { $regex: lastName, $options: 'i' };
+        }
+        if (leaveTypeName) {
+            filterQuery.leaveTypeName = leaveTypeName;
+        }
+        if (status) {
+            filterQuery.status = status;
+        }
+        if (department) {
+            filterQuery.department = department;
+        }
+        if (approved !== undefined) {
+            filterQuery.approved = approved === 'true';
+        }
+
         // Date range filter
         if (startDate || endDate) {
             filterQuery.leaveStartDate = {};
-            if (startDate) filterQuery.leaveStartDate.$gte = startDate;
-            if (endDate) filterQuery.leaveStartDate.$lte = endDate;
+            if (startDate) {
+                filterQuery.leaveStartDate.$gte = new Date(startDate);
+            }
+            if (endDate) {
+                filterQuery.leaveStartDate.$lte = new Date(endDate);
+            }
         }
 
-        if(comp){
-            filterQuery.companyId = comp.companyId;
-            filterQuery.leaveApprover = req.payload.id;
-        } else if(allComp){
-            filterQuery.companyId = req.payload.id;
-        }
+        // Execute query and count in parallel
+        const [leaveRecords, totalCount] = await Promise.all([
+            LeaveRecords.find(filterQuery)
+                .sort({ _id: -1 })
+                .limit(limitNum)
+                .skip(skip)
+                .lean()
+                .exec(),
+            LeaveRecords.countDocuments(filterQuery)
+        ]);
 
-        const employee = await LeaveRecords.find(filterQuery)
-            .sort({_id: -1}) 
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-    
-        console.log({employee})
-    
-        
-    
-        const count = await LeaveRecords.find(filterQuery).countDocuments();
-    
-        if(!employee){
-            res.status(404).json({
-                status:404,
-                success: false,
-                error:'No employee Found'
-            })
-            return
-        }else{
-            res.status(200).json({
-                status: 200,
-                success: true,
-                data: employee,
-                totalPages: Math.ceil(count / limit),
-                currentPage: page
-            })
-        }
-        return
+        const totalPages = Math.ceil(totalCount / limitNum);
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: leaveRecords,
+            totalPages: totalPages,
+            currentPage: pageNum,
+            limit: limitNum,
+           
+        });
 
     } catch (error) {
-        res.status(500).json({
+        console.error('Error fetching admin records:', error);
+        return res.status(500).json({
             status: 500,
             success: false,
-            error: error
-        })
+            error: 'Failed to fetch leave records',
+            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-}
+};
+
 export default getAdminRecords;
-
-
-

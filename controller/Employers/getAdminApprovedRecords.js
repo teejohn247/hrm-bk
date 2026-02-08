@@ -1,66 +1,70 @@
-
 import dotenv from 'dotenv';
-import Employee from '../../model/Employees';
-import EmployeeTable from '../../model/EmployeeTable';
-
-import Roles from '../../model/Roles';
-
-
-import utils from '../../config/utils';
-
-import { emailTemp } from '../../emailTemplate';
 import LeaveRecords from '../../model/LeaveRecords';
-
-
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-
-sgMail.setApiKey(process.env.SENDGRID_KEY);
-
-
-
+/**
+ * Get approved leave records for a specific approver
+ * Shows only approved records where user is the approver
+ */
 const getAdminApprovedRecords = async (req, res) => {
-
     try {
+        const { page = 1, limit = 10 } = req.query;
+        const approverId = req.params.id;
 
-        const { page, limit } = req.query;
-
-        const employee = await LeaveRecords.find({leaveApprover: req.params.id, status: "Approved"}).sort({_id: -1})
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec();
-
-        console.log({employee})
-        const count = await Employee.find().countDocuments()
-
-        if(!employee){
-            res.status(404).json({
-                status:404,
+        // Validate approver ID
+        if (!approverId) {
+            return res.status(400).json({
+                status: 400,
                 success: false,
-                error:'No employee Found'
-            })
-            return
-        }else{
-            res.status(200).json({
-                status: 200,
-                success: true,
-                data: employee,
-                totalPages: Math.ceil(count / limit),
-                currentPage: page
-            })
+                error: 'Approver ID is required'
+            });
         }
 
+        // Parse and validate pagination
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
+
+        // Build filter query
+        const filterQuery = {
+            leaveApprover: approverId,
+            status: 'Approved'
+        };
+
+        // Execute query and count in parallel
+        const [approvedRecords, totalCount] = await Promise.all([
+            LeaveRecords.find(filterQuery)
+                .sort({ _id: -1 })
+                .limit(limitNum)
+                .skip(skip)
+                .populate('userId', 'firstName lastName email')
+                .lean()
+                .exec(),
+            LeaveRecords.countDocuments(filterQuery)
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limitNum);
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: approvedRecords,
+            totalPages: totalPages,
+            currentPage: pageNum,
+            limit: limitNum,
+           
+        });
+
     } catch (error) {
-        res.status(500).json({
+        console.error('Error fetching approved records:', error);
+        return res.status(500).json({
             status: 500,
             success: false,
-            error: error
-        })
+            error: 'Failed to fetch approved records',
+            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-}
+};
+
 export default getAdminApprovedRecords;
-
-
-

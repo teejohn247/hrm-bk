@@ -1,55 +1,73 @@
 import dotenv from 'dotenv';
-import Employee from '../../model/Employees';
-import EmployeeTable from '../../model/EmployeeTable';
-
-import Roles from '../../model/Roles';
-
-
-import utils from '../../config/utils';
-
-import { emailTemp } from '../../emailTemplate';
 import LeaveRecords from '../../model/LeaveRecords';
-
-
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-
-
-
-sgMail.setApiKey(process.env.SENDGRID_KEY);
-
-
-
+/**
+ * Get leave records for a specific user (with filters and pagination)
+ * Returns user's own leave records with various filter options
+ */
 const getLeaveRecords = async (req, res) => {
-
     try {
+        const {
+            page = 1,
+            limit = 10,
+            status,
+            leaveType,
+            startDate,
+            endDate,
+            search
+        } = req.query;
 
-        const { page, limit, status, leaveType, startDate, endDate, search } = req.query;
+        const userId = req.payload.id;
 
-        // Build filter object
-        let filterQuery = { userId: req.payload.id };
-        
-        // Add status filter if provided
-        if (status) filterQuery.status = { $regex: status, $options: 'i' };
-        
-        // Add leave type filter if provided
-        if (leaveType) filterQuery.leaveType = { $regex: leaveType, $options: 'i' };
-        
-        // Add date range filters if provided
-        if (startDate && endDate) {
-            filterQuery.leaveStartDate = { $gte: new Date(startDate) };
-            filterQuery.leaveEndDate = { $lte: new Date(endDate) };
-        } else if (startDate) {
-            filterQuery.leaveStartDate = { $gte: new Date(startDate) };
-        } else if (endDate) {
-            filterQuery.leaveEndDate = { $lte: new Date(endDate) };
+        // Parse and validate pagination
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
+
+        // Build filter query - start with user filter
+        const filterQuery = { userId };
+
+        // Add status filter
+        if (status) {
+            filterQuery.status = { $regex: status, $options: 'i' };
         }
-        
-        // Add general search parameter if provided
+
+        // Add leave type filter
+        if (leaveType) {
+            filterQuery.leaveType = { $regex: leaveType, $options: 'i' };
+        }
+
+        // Add date range filters
+        if (startDate || endDate) {
+            if (startDate && endDate) {
+                // Both dates provided - records that overlap with this range
+                filterQuery.$or = [
+                    {
+                        leaveStartDate: {
+                            $gte: new Date(startDate),
+                            $lte: new Date(endDate)
+                        }
+                    },
+                    {
+                        leaveEndDate: {
+                            $gte: new Date(startDate),
+                            $lte: new Date(endDate)
+                        }
+                    }
+                ];
+            } else if (startDate) {
+                // Only start date - records starting on or after this date
+                filterQuery.leaveStartDate = { $gte: new Date(startDate) };
+            } else if (endDate) {
+                // Only end date - records ending on or before this date
+                filterQuery.leaveEndDate = { $lte: new Date(endDate) };
+            }
+        }
+
+        // Add general search filter
         if (search) {
-            // Assuming LeaveRecords model has fields like reason, comments, etc. that can be searched
             filterQuery.$or = [
                 { reason: { $regex: search, $options: 'i' } },
                 { comments: { $regex: search, $options: 'i' } },
@@ -58,47 +76,39 @@ const getLeaveRecords = async (req, res) => {
             ];
         }
 
-        console.log("[getLeaveRecords] Filter query:", filterQuery);
+        // Execute query and count in parallel
+        const [leaveRecords, totalCount] = await Promise.all([
+            LeaveRecords.find(filterQuery)
+                .sort({ _id: -1 })
+                .limit(limitNum)
+                .skip(skip)
+                .lean()
+                .exec(),
+            LeaveRecords.countDocuments(filterQuery)
+        ]);
 
-        const leaveRecords = await LeaveRecords.find(filterQuery)
-            .sort({_id: -1})
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
+        const totalPages = Math.ceil(totalCount / limitNum);
 
-        const count = await LeaveRecords.find(filterQuery).countDocuments();
-
-        if(!leaveRecords || leaveRecords.length === 0){
-            res.status(200).json({
-                status: 200,
-                success: true,
-                data: [],
-                message: 'No leave records found matching the criteria',
-                totalPages: 0,
-                currentPage: page || 1
-            });
-            return;
-        } else {
-            res.status(200).json({
-                status: 200,
-                success: true,
-                data: leaveRecords,
-                totalPages: Math.ceil(count / limit),
-                currentPage: page || 1,
-                totalRecords: count
-            });
-        }
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: leaveRecords,
+            message: leaveRecords.length === 0 ? 'No leave records found matching the criteria' : undefined,
+            totalPages: totalPages,
+            currentPage: pageNum,
+            limit: limitNum,
+           
+        });
 
     } catch (error) {
-        console.error("[getLeaveRecords] Error:", error);
-        res.status(500).json({
+        console.error('Error fetching leave records:', error);
+        return res.status(500).json({
             status: 500,
             success: false,
-            error: error.message || 'An error occurred while fetching leave records'
+            error: 'Failed to fetch leave records',
+            message: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
-}
+};
+
 export default getLeaveRecords;
-
-
-
