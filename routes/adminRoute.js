@@ -906,7 +906,7 @@ router.delete('/support-tickets/:id', auth, deleteTicket);
 
 // Notification routes
 router.get('/notifications', auth, fetchNotifications);
-router.patch('/markAsRead/:id', auth, readNotification);
+router.patch('/notifications/markAsRead/:id', auth, readNotification);
 // router.get('/notifications/:id', auth, fetchNotificationById);
 // router.patch('/notifications/:id', auth, updateNotification);
 // router.delete('/notifications/:id', auth, deleteNotification);
