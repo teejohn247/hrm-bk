@@ -12,6 +12,8 @@ const NotificationsSchema = new mongoose.Schema({
         type: Boolean, default: false
     },
     created_by: {type: String, required: true},
+    meetingId: {type: String},
+    meetLink: {type: String},
 }, { timestamps: true })
 
 

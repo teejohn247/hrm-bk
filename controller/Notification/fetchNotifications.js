@@ -28,6 +28,7 @@ const fetchNotifications = async (req, res) => {
                     $in: [
                         'Leave Request',
                         'Expense Request',
+                        'Meeting Invitation',
                         'Appraisal Request',
                         'Leave Approval',
                         'Expense Approval',
@@ -61,6 +62,7 @@ const fetchNotifications = async (req, res) => {
                     notificationType: { 
                         $in: [
                             'Leave Request',
+                            'Meeting Invitation',
                             'Expense Request',
                             'Appraisal Request',
                             'Leave Approval',
