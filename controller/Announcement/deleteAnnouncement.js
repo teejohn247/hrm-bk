@@ -24,11 +24,11 @@ const deleteAnnouncement = async (req, res) => {
         }
 
         // Soft delete by setting isActive to false
-        announcement.isActive = false;
-        await announcement.save();
+        // announcement.isActive = false;
+        // await announcement.save();
 
         // Or hard delete if preferred
-        // await Announcement.deleteOne({ _id: id });
+        await Announcement.deleteOne({ _id: id });
 
         res.status(200).json({
             status: 200,
