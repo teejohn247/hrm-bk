@@ -20,12 +20,25 @@ const fetchNotifications = async (req, res) => {
         let companyId;
 
         if (isCompanyAccount) {
-            // Company account sees ALL notifications for their company
+            // Company account sees only approval-related notifications
             companyId = company._id.toString();
             query = {
-                companyId: companyId
+                companyId: companyId,
+                notificationType: { 
+                    $in: [
+                        'Leave Request',
+                        'Expense Request',
+                        'Appraisal Request',
+                        'Leave Approval',
+                        'Expense Approval',
+                        'Document Approval',
+                        'Approval Required',
+                        'Pending Approval',
+                        'Request Submitted'
+                    ]
+                }
             };
-            console.log(`Company account: fetching all notifications for ${company.companyName}`);
+            console.log(`Company account: fetching approval notifications for ${company.companyName}`);
         } else {
             // Employee account - check if employee exists
             const employee = await Employee.findOne({ _id: userId });
@@ -42,13 +55,26 @@ const fetchNotifications = async (req, res) => {
 
             // Check if employee is super admin
             if (employee.isSuperAdmin) {
-                // Super admin sees all notifications for the company
+                // Super admin sees only approval-related notifications for the company
                 query = {
-                    companyId: companyId
+                    companyId: companyId,
+                    notificationType: { 
+                        $in: [
+                            'Leave Request',
+                            'Expense Request',
+                            'Appraisal Request',
+                            'Leave Approval',
+                            'Expense Approval',
+                            'Document Approval',
+                            'Approval Required',
+                            'Pending Approval',
+                            'Request Submitted'
+                        ]
+                    }
                 };
-                console.log(`Super admin: fetching all notifications`);
+                console.log(`Super admin: fetching approval notifications`);
             } else {
-                // Regular employee sees only their unread notifications
+                // Regular employee sees all their unread notifications
                 query = {
                     companyId: companyId,
                     recipientId: userId.toString(),
