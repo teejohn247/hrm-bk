@@ -4,7 +4,7 @@
   "description": "SMS",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --exec 'node --max-old-space-size=4096 node_modules/.bin/babel-node' app.js",
+    "start": "nodemon --exec babel-node app.js",
     "dev": "nodemon --exec babel-node app.js",
     "test": "nyc --reporter=html --reporter=text mocha --require @babel/register --recursive --no-timeout --exit test/*js || true",
     "coverage": "nyc npm test",
