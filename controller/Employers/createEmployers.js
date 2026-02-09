@@ -409,6 +409,14 @@ const inviteEmployee = async (req, res) => {
             return res.status(400).json({
                 status: 400,
                 success: false,
+                error: 'Required field: Employee Start Date'
+            });
+        }
+
+        if (!employmentStartDate) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
                 error: 'Required fields: firstName, lastName, email, departmentId, designationId'
             });
         }
