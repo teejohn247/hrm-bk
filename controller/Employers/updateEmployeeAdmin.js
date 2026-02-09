@@ -365,7 +365,7 @@ const updateEmployeeAdmin = async (req, res) => {
         if (gender) updateData.gender = gender;
         if (companyRole) updateData.companyRole = companyRole;
         if (employmentType) updateData.employmentType = employmentType;
-        if (employmentStartDate) updateData.employmentStartDate = employmentStartDate;
+        // if (employmentStartDate) updateData.employmentStartDate = employmentStartDate;
         if (image) updateData.profilePic = image;
 
         // Department-related fields
