@@ -247,6 +247,12 @@ import exportCustomersToExcel from '../controller/Customer/exportCustomer';
 import pullIndustries from '../controller/Industries/createIndustries';
 import getIndustries from '../controller/Industries/getIndustries';
 
+
+import createDocumentType from '../controller/Documents/createDocumentType';
+import fetchDocumentType from '../controller/Documents/fetchDocumentType';
+import updateDocumentType from '../controller/Documents/updateDocumentType';
+import deleteDocumentType from '../controller/Documents/deleteDocumentType';
+
 import utils from '../config/utils';
 
 import Employee from '../model/Employees';
@@ -332,6 +338,9 @@ import readNotification from '../controller/Notification/readNotification';
 // import fetchNotificationByEmployeeId from '../controller/Notification/fetchNotificationByEmployeeId';
 // import fetchNotificationByCompanyId from '../controller/Notification/fetchNotificationByCompanyId';
 // import fetchNotificationByAdminId from '../controller/Notification/fetchNotificationByAdminId';
+
+
+
 
 const { userValidationRules, validate } = require('../middleware/signUpValidation')
 const multer = require("multer");
@@ -868,6 +877,13 @@ router.get('/fetchLeaveByEmployeeId', auth, fetchLeaveByEmployeeId);
 //     .put(auth, checkInFormController.updateForm)
 //     .delete(auth, checkInFormController.deleteForm);
 
+
+// Document type routes
+router.post('/createDocumentType', auth, createDocumentType);
+router.get('/fetchDocumentType', auth, fetchDocumentType);
+router.patch('/updateDocumentType/:id', auth, updateDocumentType);
+router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
+
 // Add route handlers for user complaints
 router.post('/complaints', auth, createComplaint);
 router.get('/complaints/user', auth, getUserComplaints);
@@ -913,6 +929,7 @@ router.patch('/notifications/markAsRead/:id', auth, readNotification);
 // router.get('/notifications/employee/:employeeId', auth, fetchNotificationByEmployeeId);
 // router.get('/notifications/company/:companyId', auth, fetchNotificationByCompanyId);
 // router.get('/notifications/admin/:adminId', auth, fetchNotificationByAdminId);
+
 
 
 export default router;
