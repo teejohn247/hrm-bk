@@ -102,8 +102,6 @@
 // }
 // export default updatePeriodData;
 
-
-
 import dotenv from 'dotenv';
 import Company from '../../model/Company';
 import Employee from '../../model/Employees';
@@ -176,11 +174,11 @@ const updatePeriodData = async (req, res) => {
             });
         }
 
-        // Find the period data entry
+        // Find the period data entry - USE .lean() to get plain object
         const periodData = await PeriodPayData.findOne({
             _id: periodDataId,
             companyId: userCompany._id.toString()
-        });
+        }).lean(); // ✅ Add .lean() here
 
         if (!periodData) {
             return res.status(404).json({
@@ -202,8 +200,15 @@ const updatePeriodData = async (req, res) => {
         
         // Handle dynamic fields - merge with existing if provided
         if (dynamicFields !== undefined && typeof dynamicFields === 'object') {
+            // Convert existing dynamicFields to plain object if it's a Map
+            const existingFields = periodData.dynamicFields 
+                ? (periodData.dynamicFields instanceof Map 
+                    ? Object.fromEntries(periodData.dynamicFields) 
+                    : { ...periodData.dynamicFields })
+                : {};
+
             updateData.dynamicFields = {
-                ...periodData.dynamicFields,
+                ...existingFields,
                 ...dynamicFields
             };
         }
