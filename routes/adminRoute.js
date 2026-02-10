@@ -878,11 +878,7 @@ router.get('/fetchLeaveByEmployeeId', auth, fetchLeaveByEmployeeId);
 //     .delete(auth, checkInFormController.deleteForm);
 
 
-// Document type routes
-router.post('/createDocumentType', auth, createDocumentType);
-router.get('/fetchDocumentType', auth, fetchDocumentType);
-router.patch('/updateDocumentType/:id', auth, updateDocumentType);
-router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
+
 
 // Add route handlers for user complaints
 router.post('/complaints', auth, createComplaint);
@@ -930,6 +926,10 @@ router.patch('/notifications/markAsRead/:id', auth, readNotification);
 // router.get('/notifications/company/:companyId', auth, fetchNotificationByCompanyId);
 // router.get('/notifications/admin/:adminId', auth, fetchNotificationByAdminId);
 
-
+// Document type routes
+router.post('/createDocumentType', auth, createDocumentType);
+router.get('/fetchDocumentType', auth, fetchDocumentType);
+router.patch('/updateDocumentType/:id', auth, updateDocumentType);
+router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
 
 export default router;

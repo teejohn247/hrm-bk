@@ -463,10 +463,23 @@ const createMeeting = async (req, res) => {
 
         const savedMeeting = await meeting.save();
 
+        const options = { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          };
+          const timeOptions = { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          };
+          
+          console.log(`You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString('en-GB', options)} at ${startDate.toLocaleTimeString('en-US', timeOptions)}`)
+
         // Send notifications to all invited guests
         const notifications = guestDetails.map(guest => ({
             notificationType: 'Meeting Invitation',
-            notificationContent: `You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString()}`,
+            notificationContent: `You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString('en-GB', options)} at ${startDate.toLocaleTimeString()}`,
             recipientId: guest.employeeId,
             companyName,
             companyId: companyId.toString(),
