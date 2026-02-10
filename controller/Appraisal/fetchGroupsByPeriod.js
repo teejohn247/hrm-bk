@@ -744,6 +744,7 @@ const fetchGroupsByPeriod = async (req, res) => {
             endDate: appraisalPeriod.endDate,
             activeDate: appraisalPeriod.activeDate,
             inactiveDate: appraisalPeriod.inactiveDate,
+            employeeKpiId: appraisalData?.employeeKpiId,
             status: employeeKpiSubmission?.status || appraisalData?.status || 'Pending',
             employeeSubmissionDate: employeeKpiSubmission?.employeeSignedDate || appraisalData?.employeeSubmissionDate,
             employeeSignStatus: employeeKpiSubmission?.employeeSignStatus || false,
