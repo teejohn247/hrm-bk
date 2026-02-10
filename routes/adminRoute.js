@@ -257,6 +257,9 @@ import utils from '../config/utils';
 
 import Employee from '../model/Employees';
 
+import approvePayrollPeriod from '../controller/Payroll/approvePayroll.js';
+import disbursePayrollPeriod from '../controller/Payroll/disbursePayroll.js';
+
 import updateProduct from '../controller/Product/updateProduct';
 import createStock from '../controller/Stock/createStock';
 import fetchStocks from '../controller/Stock/fetchStocks';
@@ -931,5 +934,10 @@ router.post('/createDocumentType', auth, createDocumentType);
 router.get('/fetchDocumentType', auth, fetchDocumentType);
 router.patch('/updateDocumentType/:id', auth, updateDocumentType);
 router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
+
+// Payroll routes
+router.patch('/approvePayroll/:id', auth, approvePayrollPeriod);
+router.patch('/disbursePayroll/:id', auth, disbursePayrollPeriod);
+
 
 export default router;

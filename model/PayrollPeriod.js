@@ -11,6 +11,8 @@ const PayrollPeriodSchema = new mongoose.Schema({
     totalEarnings: { type: Number, default: 0 },
     netEarnings: { type: Number, default: 0 },
     deductions: { type: Number, default: 0 },
+    periodStatusApproved: { type: Boolean, default: false },
+    periodPayrollDisbursed: { type: Boolean, default: false },
     status: {type: String, default: 'Pending'},
     date: { type: Date, default: Date.now()},
     approvers: [

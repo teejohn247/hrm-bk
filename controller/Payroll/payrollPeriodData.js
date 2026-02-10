@@ -33,7 +33,6 @@
        
 //         const { payrollPeriodName, description, startDate, endDate, approvers } = req.body;
 
-      
 //         let company = await Company.findOne({ _id: req.payload.id });
 
 
@@ -342,17 +341,44 @@
 // }
 // export default createPayrollPeriod;
 
-
-
 import dotenv from 'dotenv';
 import Company from '../../model/Company';
 import PayrollPeriod from '../../model/PayrollPeriod';
 import Employee from '../../model/Employees';
+import PeriodPayData from '../../model/PeriodPayData';
+import Credits from '../../model/Credits';
+import Debits from '../../model/Debit';
+import SalaryScale from '../../model/SalaryScale';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
 /**
- * Create a new payroll period
+ * Convert string to camelCase
+ * Example: "Basic Salary" -> "basicSalary"
+ */
+function toCamelCase(str) {
+    return str.split(' ').map((word, index) => {
+        if (index === 0) {
+            return word.toLowerCase();
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join('');
+}
+
+/**
+ * Validate if a value is a valid MongoDB ObjectId
+ */
+function isValidObjectId(id) {
+    return id && 
+           typeof id === 'string' && 
+           id.trim() !== '' && 
+           mongoose.Types.ObjectId.isValid(id) &&
+           id.length === 24;
+}
+
+/**
+ * Create a new payroll period with employee pay data
  * @route POST /api/payroll/period/create
  */
 const createPayrollPeriod = async (req, res) => {
@@ -389,7 +415,7 @@ const createPayrollPeriod = async (req, res) => {
             });
         }
 
-        if (end <= start) {
+        if (start >= end) {
             return res.status(400).json({
                 status: 400,
                 success: false,
@@ -398,27 +424,25 @@ const createPayrollPeriod = async (req, res) => {
         }
 
         // Check if user is company or employee
-        const company = await Company.findOne({ _id: userId });
-        const isCompanyAccount = !!company;
+        const [company, employee] = await Promise.all([
+            Company.findById(userId).lean(),
+            Employee.findById(userId).lean()
+        ]);
 
         let userCompany;
         let isAuthorized = false;
+        let approverCompany = null;
 
-        if (isCompanyAccount) {
+        if (company) {
+            console.log(`[CreatePayrollPeriod] Company account detected: ${company.companyName}`);
             userCompany = company;
             isAuthorized = true;
-        } else {
-            const employee = await Employee.findOne({ _id: userId });
+            approverCompany = company;
 
-            if (!employee) {
-                return res.status(404).json({
-                    status: 404,
-                    success: false,
-                    error: 'User not found'
-                });
-            }
-
-            userCompany = await Company.findOne({ _id: employee.companyId });
+        } else if (employee) {
+            console.log(`[CreatePayrollPeriod] Employee account detected: ${employee.fullName}`);
+            
+            userCompany = await Company.findById(employee.companyId).lean();
 
             if (!userCompany) {
                 return res.status(404).json({
@@ -428,20 +452,28 @@ const createPayrollPeriod = async (req, res) => {
                 });
             }
 
-            // Check permissions
             isAuthorized = 
-                employee.isManager === true ||
                 employee.isSuperAdmin === true ||
-                employee.role === 'Manager' ||
-                employee.roleName === 'Manager' ||
+                employee.role === 'Admin' ||
+                employee.roleName === 'Admin' ||
+                employee.companyRole === 'Admin' ||
                 employee.permissions?.payrollManagement?.create_payroll_period === true;
-        }
 
-        if (!isAuthorized) {
-            return res.status(403).json({
-                status: 403,
+            if (!isAuthorized) {
+                return res.status(403).json({
+                    status: 403,
+                    success: false,
+                    error: 'You do not have permission to create payroll periods. Only admins and users with payroll management permissions can create payroll periods.'
+                });
+            }
+
+            approverCompany = userCompany;
+
+        } else {
+            return res.status(404).json({
+                status: 404,
                 success: false,
-                error: 'You do not have permission to create payroll periods'
+                error: 'User not found'
             });
         }
 
@@ -455,20 +487,100 @@ const createPayrollPeriod = async (req, res) => {
             return res.status(400).json({
                 status: 400,
                 success: false,
-                error: 'A payroll period with this name already exists'
+                error: 'A payroll period with this name already exists for this company'
+            });
+        }
+
+        // Check for overlapping date ranges
+        const overlappingPeriod = await PayrollPeriod.findOne({
+            companyId: userCompany._id.toString(),
+            $or: [
+                {
+                    startDate: { $lte: end },
+                    endDate: { $gte: start }
+                }
+            ]
+        });
+
+        if (overlappingPeriod) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                error: `A payroll period already exists for this date range: "${overlappingPeriod.payrollPeriodName}" (${overlappingPeriod.startDate.toLocaleDateString()} - ${overlappingPeriod.endDate.toLocaleDateString()})`,
+                conflictingPeriod: {
+                    name: overlappingPeriod.payrollPeriodName,
+                    startDate: overlappingPeriod.startDate,
+                    endDate: overlappingPeriod.endDate
+                }
+            });
+        }
+
+        // Fetch all employees
+        const employees = await Employee.find(
+            { 
+                companyId: userCompany._id.toString(),
+                $or: [
+                    { employmentStatus: 'Active' },
+                    { employmentStatus: { $exists: false } }
+                ]
+            }
+        ).select('_id companyRole salaryLevel salaryScale companyId companyName firstName lastName fullName role designationName department profilePic').lean();
+
+        if (employees.length === 0) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                error: 'No active employees found in this company'
+            });
+        }
+
+        // ✅ VALIDATE ALL EMPLOYEES HAVE VALID SALARY SCALES AND LEVELS
+        const invalidEmployees = [];
+
+        for (const employee of employees) {
+            const issues = [];
+
+            if (!isValidObjectId(employee.salaryScale)) {
+                issues.push('Missing or invalid salary scale');
+            }
+
+            if (!isValidObjectId(employee.salaryLevel)) {
+                issues.push('Missing or invalid salary level');
+            }
+
+            if (issues.length > 0) {
+                invalidEmployees.push({
+                    employeeId: employee._id,
+                    fullName: employee.fullName || `${employee.firstName} ${employee.lastName}`,
+                    department: employee.department || 'N/A',
+                    issues: issues
+                });
+            }
+        }
+
+        // If there are invalid employees, return error immediately
+        if (invalidEmployees.length > 0) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                error: `Cannot create payroll period. ${invalidEmployees.length} employee(s) have missing or invalid salary configuration.`,
+                message: 'Please assign valid salary scales and levels to all employees before creating a payroll period.',
+                invalidEmployees: invalidEmployees,
+                totalEmployees: employees.length,
+                invalidCount: invalidEmployees.length
             });
         }
 
         // Generate reference number
-        const periodCount = await PayrollPeriod.countDocuments({ 
-            companyId: userCompany._id.toString() 
+        const periodCount = await PayrollPeriod.countDocuments({
+            companyId: userCompany._id.toString()
         });
-        
+
         const now = new Date();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const year = now.getFullYear();
-        const reference = `PAY-${year}${month}${day}-${periodCount + 1}`;
+        const reference = `PAY-${year}${month}${day}-${String(periodCount + 1).padStart(4, '0')}`;
 
         // Create payroll period
         const newPeriod = new PayrollPeriod({
@@ -479,19 +591,176 @@ const createPayrollPeriod = async (req, res) => {
             description: description?.trim() || '',
             startDate: start,
             endDate: end,
+            approvers: [{
+                approverId: approverCompany._id.toString(),
+                approvalFullName: approverCompany.companyName,
+                approvalProfilePic: approverCompany.companyLogo || approverCompany.logo || ''
+            }],
             status: 'Active',
-            createdBy: userId.toString()
+            createdBy: userId
         });
 
         const savedPeriod = await newPeriod.save();
 
-        console.log(`[CreatePayrollPeriod] Period "${payrollPeriodName}" created with reference: ${reference}`);
+        console.log(`[CreatePayrollPeriod] Created period "${payrollPeriodName}" with reference: ${reference}`);
+
+        // Fetch credits and debits in parallel
+        const [allCredits, allDebits] = await Promise.all([
+            Credits.find({ companyId: userCompany._id.toString() }).lean(),
+            Debits.find({ companyId: userCompany._id.toString() }).lean()
+        ]);
+
+        console.log(`[CreatePayrollPeriod] Processing ${employees.length} employees`);
+
+        // Create lookup maps
+        const creditsMap = new Map(allCredits.map(c => [c._id.toString(), c]));
+        const debitsMap = new Map(allDebits.map(d => [d._id.toString(), d]));
+
+        const findValueById = (refId) => {
+            const refIdStr = refId.toString();
+            if (creditsMap.has(refIdStr)) {
+                return creditsMap.get(refIdStr).value || 0;
+            }
+            if (debitsMap.has(refIdStr)) {
+                return debitsMap.get(refIdStr).value || 0;
+            }
+            return 0;
+        };
+
+        // Process each employee's payroll data
+        const periodPayDataPromises = employees.map(async (employee) => {
+            try {
+                // Fetch salary scale
+                const salaryScale = await SalaryScale.findById(employee.salaryScale).lean();
+
+                if (!salaryScale) {
+                    console.error(`[CreatePayrollPeriod] Salary scale not found for employee ${employee._id}`);
+                    return null;
+                }
+
+                // Find the specific level
+                const salaryLevel = salaryScale.salaryScaleLevels?.find(
+                    level => level._id.toString() === employee.salaryLevel.toString()
+                );
+
+                if (!salaryLevel) {
+                    console.error(`[CreatePayrollPeriod] Salary level not found for employee ${employee._id}`);
+                    return null;
+                }
+
+                const { payrollCredits = [], payrollDebits = [] } = salaryLevel;
+                const dynamicFields = {};
+
+                // Process payroll credits
+                for (const credit of payrollCredits) {
+                    if (credit.name && typeof credit.name === 'string') {
+                        const fieldName = toCamelCase(credit.name);
+
+                        if (credit.type === 'exact') {
+                            dynamicFields[fieldName] = Number(credit.value) || 0;
+                        } else if (credit.type === 'percentage' && credit.refId) {
+                            const exactValue = findValueById(credit.refId);
+                            dynamicFields[fieldName] = (Number(credit.value) / 100) * exactValue;
+                        }
+                    }
+                }
+
+                // Process payroll debits
+                for (const debit of payrollDebits) {
+                    if (debit.name && typeof debit.name === 'string') {
+                        const fieldName = toCamelCase(debit.name);
+
+                        if (debit.type === 'exact') {
+                            dynamicFields[fieldName] = Number(debit.value) || 0;
+                        } else if (debit.type === 'percentage' && debit.refId) {
+                            const exactValue = findValueById(debit.refId);
+                            dynamicFields[fieldName] = (Number(debit.value) / 100) * exactValue;
+                        }
+                    }
+                }
+
+                // Add all company credits/debits as fields
+                for (const credit of allCredits) {
+                    if (credit.name && typeof credit.name === 'string') {
+                        const fieldName = toCamelCase(credit.name);
+                        if (!dynamicFields.hasOwnProperty(fieldName)) {
+                            dynamicFields[fieldName] = 0;
+                        }
+                    }
+                }
+
+                for (const debit of allDebits) {
+                    if (debit.name && typeof debit.name === 'string') {
+                        const fieldName = toCamelCase(debit.name);
+                        if (!dynamicFields.hasOwnProperty(fieldName)) {
+                            dynamicFields[fieldName] = 0;
+                        }
+                    }
+                }
+
+                // Calculate totals
+                let totalEarnings = 0;
+                let totalDeductions = 0;
+
+                for (const credit of payrollCredits) {
+                    const fieldName = toCamelCase(credit.name);
+                    totalEarnings += Number(dynamicFields[fieldName]) || 0;
+                }
+
+                for (const debit of payrollDebits) {
+                    const fieldName = toCamelCase(debit.name);
+                    totalDeductions += Number(dynamicFields[fieldName]) || 0;
+                }
+
+                const netEarnings = totalEarnings - totalDeductions;
+
+                // Create PeriodPayData record
+                const periodPayData = new PeriodPayData({
+                    companyId: employee.companyId,
+                    companyName: employee.companyName,
+                    payrollPeriodId: savedPeriod._id.toString(),
+                    employeeId: employee._id.toString(),
+                    firstName: employee.firstName,
+                    lastName: employee.lastName,
+                    fullName: employee.fullName || `${employee.firstName} ${employee.lastName}`,
+                    profilePic: employee.profilePic || '',
+                    department: employee.department || '',
+                    designation: employee.designationName || '',
+                    role: employee.companyRole || employee.role || '',
+                    dynamicFields,
+                    totalEarnings,
+                    deductions: totalDeductions,
+                    netEarnings,
+                    status: 'Pending'
+                });
+
+                return await periodPayData.save();
+            } catch (error) {
+                console.error(`[CreatePayrollPeriod] Error processing employee ${employee._id}:`, error);
+                return null;
+            }
+        });
+
+        const periodPayDataResults = await Promise.all(periodPayDataPromises);
+        const successfulPayData = periodPayDataResults.filter(data => data !== null);
+
+        console.log(`[CreatePayrollPeriod] Created ${successfulPayData.length}/${employees.length} employee pay records`);
+
+        const response = {
+            ...savedPeriod.toObject(),
+            payrollPeriodData: successfulPayData,
+            summary: {
+                totalEmployees: employees.length,
+                processedEmployees: successfulPayData.length,
+                failedEmployees: employees.length - successfulPayData.length
+            }
+        };
 
         return res.status(200).json({
             status: 200,
             success: true,
-            data: savedPeriod,
-            message: 'Payroll period created successfully'
+            data: response,
+            message: `Payroll period "${payrollPeriodName}" created successfully with ${successfulPayData.length} employee records`
         });
 
     } catch (error) {
@@ -510,12 +779,20 @@ const createPayrollPeriod = async (req, res) => {
             });
         }
 
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                error: 'Invalid ID format',
+                details: error.message
+            });
+        }
+
         if (error.code === 11000) {
             return res.status(400).json({
                 status: 400,
                 success: false,
-                error: 'Duplicate payroll period',
-                details: 'A period with this name already exists'
+                error: 'Duplicate payroll period name'
             });
         }
 

@@ -382,12 +382,12 @@ const addPayment = async (req, res) => {
 
         // Prepare payment information object
         const paymentInfo = {
-            bankName: bankName.trim(),
-            bankAddress: bankAddress?.trim() || '',
-            accountNumber: accountNumber.toString().trim(),
-            sortCode: sortCode?.trim() || '',
-            accountName: accountName.trim(),
-            taxIdentificationNumber: taxIdentificationNumber?.trim() || '',
+            bankName: bankName,
+            bankAddress: bankAddress,
+            accountNumber: accountNumber,
+            sortCode: sortCode,
+            accountName: accountName,
+            taxIdentificationNumber: taxIdentificationNumber,
             updatedAt: new Date()
         };
 
