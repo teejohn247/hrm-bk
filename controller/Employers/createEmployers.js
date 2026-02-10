@@ -535,7 +535,7 @@ const inviteEmployee = async (req, res) => {
             departmentId,
             department: department.departmentName,
             employmentType,
-            employmentStartDate,
+            employmentStartDate: employmentStartDate ? employmentStartDate : new Date().toISOString(),        
             managerId: department.managerId || '',
             managerName: department.managerName || '',
             email,
