@@ -487,8 +487,8 @@ const createPayrollPeriod = async (req, res) => {
 
         console.log(`[CreatePayrollPeriod] Period "${payrollPeriodName}" created with reference: ${reference}`);
 
-        return res.status(201).json({
-            status: 201,
+        return res.status(200).json({
+            status: 200,
             success: true,
             data: savedPeriod,
             message: 'Payroll period created successfully'

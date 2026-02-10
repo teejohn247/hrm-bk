@@ -702,7 +702,7 @@ router.post("/createDebits", auth, createDebits);
 router.post("/createPayrollPeriod", auth, createPayrollPeriod);
 router.get("/fetchCredits", auth, fetchCredits);
 router.get("/fetchDebits", auth, fetchDebits);
-// router.get("/fetchPayrollPeriods", auth, fetchPayrollPeriod);
+router.get("/fetchPayrollPeriods", auth, fetchPayrollPeriod);
 router.patch("/updateCredits/:id", auth, updateCredits);
 router.patch("/updateDebits/:id", auth, updateDebits);
 router.patch("/updatePayrollPeriod/:id", auth, updatePayrollPeriod);
