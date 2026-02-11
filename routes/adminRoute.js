@@ -501,6 +501,10 @@ import getAllQuizzes from '../controller/Quiz/getAllQuizzes.js';
 import fixCourseQuizRelationships from '../controller/Quiz/fixCourseQuizRelationships.js';
 import updateAppraisalPeriod from '../controller/Appraisal/updateAppraisalPeriod.js';
 import importFreights from '../controller/Courier/importCourier.js';
+import uploadDocument from '../controller/Documents/UploadDocument.js';
+import getDocuments from '../controller/Documents/fetchDocuments.js';
+import deleteDocument from '../controller/Documents/deleteDocument.js';
+
 
 // Add passport configuration
 // passport.serializeUser((user, done) => {
@@ -939,5 +943,9 @@ router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
 router.patch('/approvePayroll/:id', auth, approvePayrollPeriod);
 router.patch('/disbursePayroll/:id', auth, disbursePayrollPeriod);
 
+// Document routes
+router.post('/uploadDocument', auth, upload.single("file"), imageUploader, uploadDocument);
+router.get('/fetchDocuments/:employeeId', auth, getDocuments);
+router.delete('/deleteDocument/:id', auth, deleteDocument);
 
 export default router;
