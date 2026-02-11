@@ -111,7 +111,6 @@
 
 // export default fetchExpenseReqs;
 
-
 import dotenv from 'dotenv';
 import ExpenseRequests from '../../model/ExpenseRequests';
 import Employee from '../../model/Employees';
@@ -121,21 +120,24 @@ dotenv.config();
 
 /**
  * Fetch expense requests with comprehensive filtering
- * Filter Options: Employee, Expense category, Approval status, Payment status,
- * Date range, Amount range, Department, Company
+ * Filter Options: Employee ID, Expense type ID, Approval status, Payment status,
+ * Date range, Amount range, Department ID, Company
  */
 const fetchExpenseReqs = async (req, res) => {
     try {
         const {
             page = 1,
             limit = 10,
-            // Employee filters
-            employeeId,
-            employeeName,
-            department,
-            // Expense filters
-            expenseCategory, // Expense type name
-            expenseTypeId,
+            // Employee filters - ID-based (RECOMMENDED)
+            employeeId, // Employee reference
+            departmentId, // Department schema reference
+            // Employee filters - Name-based (Backward compatibility)
+            employeeName, // Deprecated - use employeeId
+            department, // Deprecated - use departmentId
+            // Expense filters - ID-based (RECOMMENDED)
+            expenseTypeId, // Expense type schema reference
+            // Expense filters - Name-based (Backward compatibility)
+            expenseCategory, // Deprecated - use expenseTypeId
             // Status filters
             approvalStatus, // Pending, Approved, Declined
             paymentStatus, // Paid, Unpaid, Processing
@@ -204,27 +206,34 @@ const fetchExpenseReqs = async (req, res) => {
             ];
         }
 
-        // Employee filters
+        // Employee filters - PRIORITY: Use IDs if provided, fallback to names
         if (employeeId) {
+            // ✅ RECOMMENDED: Filter by employee ID
             filterQuery.employeeId = employeeId;
-        }
-        if (employeeName) {
+        } else if (employeeName) {
+            // ⚠️ FALLBACK: Filter by employee name (for backward compatibility)
             filterQuery.$or = [
                 { firstName: { $regex: employeeName, $options: 'i' } },
                 { lastName: { $regex: employeeName, $options: 'i' } },
                 { fullName: { $regex: employeeName, $options: 'i' } }
             ];
         }
-        if (department) {
+
+        if (departmentId) {
+            // ✅ RECOMMENDED: Filter by department ID
+            filterQuery.departmentId = departmentId;
+        } else if (department) {
+            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
-        // Expense filters
-        if (expenseCategory) {
-            filterQuery.expenseTypeName = { $regex: expenseCategory, $options: 'i' };
-        }
+        // Expense filters - PRIORITY: Use IDs if provided, fallback to names
         if (expenseTypeId) {
+            // ✅ RECOMMENDED: Filter by expense type ID
             filterQuery.expenseTypeId = expenseTypeId;
+        } else if (expenseCategory) {
+            // ⚠️ FALLBACK: Filter by expense category name (for backward compatibility)
+            filterQuery.expenseTypeName = { $regex: expenseCategory, $options: 'i' };
         }
 
         // Status filters
@@ -274,6 +283,7 @@ const fetchExpenseReqs = async (req, res) => {
                 .skip(skip)
                 .populate('expenseTypeId', 'name description')
                 .populate('employeeId', 'firstName lastName email profilePic')
+                .populate('departmentId', 'departmentName')
                 .populate('approver', 'firstName lastName email')
                 .lean()
                 .exec(),
@@ -313,9 +323,10 @@ const fetchExpenseReqs = async (req, res) => {
             filters: {
                 employeeId,
                 employeeName,
+                departmentId,
                 department,
-                expenseCategory,
                 expenseTypeId,
+                expenseCategory,
                 approvalStatus,
                 paymentStatus,
                 startDate,

@@ -181,7 +181,6 @@
 
 // export default fetchEmployees;
 
-
 import dotenv from 'dotenv';
 import Employee from '../../model/Employees';
 import EmployeeTable from '../../model/EmployeeTable';
@@ -191,8 +190,8 @@ dotenv.config();
 
 /**
  * Fetch employees with comprehensive filtering and pagination
- * Filter Options: Department, Job title, Employment status, Employment type,
- * Company, Location, Manager, Hire date range, Termination date range, Gender, Nationality
+ * Filter Options: Department ID, Designation ID, Employment status, Employment type,
+ * Company, Location, Manager ID, Hire date range, Termination date range, Gender, Nationality
  */
 const fetchEmployees = async (req, res) => {
     try {
@@ -203,12 +202,15 @@ const fetchEmployees = async (req, res) => {
             firstName,
             lastName,
             search,
-            // Job filters
-            department,
-            designation, // Job title
+            // Job filters - ID-based (RECOMMENDED)
+            departmentId, // Department schema reference
+            designationId, // Designation schema reference
+            managerId, // Manager reference
+            // Job filters - Name-based (Backward compatibility)
+            department, // Deprecated - use departmentId
+            designation, // Deprecated - use designationId
+            managerName, // Deprecated - use managerId
             employeeCode,
-            managerName,
-            managerId,
             // Employment filters
             employmentStatus, // Active, Inactive, Suspended
             employmentType, // Full-time, Part-time, Contract, Intern
@@ -277,12 +279,32 @@ const fetchEmployees = async (req, res) => {
             if (lastName) filterQuery.lastName = { $regex: lastName, $options: 'i' };
         }
 
-        // Job filters
-        if (department) filterQuery.department = { $regex: department, $options: 'i' };
-        if (designation) filterQuery.designation = { $regex: designation, $options: 'i' };
+        // Job filters - PRIORITY: Use IDs if provided, fallback to names
+        if (departmentId) {
+            // ✅ RECOMMENDED: Filter by department ID
+            filterQuery.departmentId = departmentId;
+        } else if (department) {
+            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
+            filterQuery.department = { $regex: department, $options: 'i' };
+        }
+
+        if (designationId) {
+            // ✅ RECOMMENDED: Filter by designation ID
+            filterQuery.designationId = designationId;
+        } else if (designation) {
+            // ⚠️ FALLBACK: Filter by designation name (for backward compatibility)
+            filterQuery.designation = { $regex: designation, $options: 'i' };
+        }
+
+        if (managerId) {
+            // ✅ RECOMMENDED: Filter by manager ID
+            filterQuery.managerId = managerId;
+        } else if (managerName) {
+            // ⚠️ FALLBACK: Filter by manager name (for backward compatibility)
+            filterQuery.managerName = { $regex: managerName, $options: 'i' };
+        }
+
         if (employeeCode) filterQuery.employeeCode = { $regex: employeeCode, $options: 'i' };
-        if (managerName) filterQuery.managerName = { $regex: managerName, $options: 'i' };
-        if (managerId) filterQuery.managerId = managerId;
 
         // Employment filters
         if (employmentStatus) filterQuery.employmentStatus = employmentStatus;
@@ -337,6 +359,9 @@ const fetchEmployees = async (req, res) => {
                     .limit(limitNum)
                     .skip(skip)
                     .select('-password -__v')
+                    .populate('departmentId', 'departmentName')
+                    .populate('designationId', 'designationName')
+                    .populate('managerId', 'firstName lastName fullName')
                     .lean()
                     .exec(),
                 Employee.countDocuments(filterQuery)
@@ -345,6 +370,9 @@ const fetchEmployees = async (req, res) => {
             employeeData = await Employee.find(filterQuery)
                 .sort(sortOptions)
                 .select('-password -__v')
+                .populate('departmentId', 'departmentName')
+                .populate('designationId', 'designationName')
+                .populate('managerId', 'firstName lastName fullName')
                 .lean()
                 .exec();
             totalCount = employeeData.length;
@@ -361,11 +389,13 @@ const fetchEmployees = async (req, res) => {
                 search,
                 firstName,
                 lastName,
+                departmentId,
                 department,
+                designationId,
                 designation,
                 employeeCode,
-                managerName,
                 managerId,
+                managerName,
                 employmentStatus,
                 employmentType,
                 location,

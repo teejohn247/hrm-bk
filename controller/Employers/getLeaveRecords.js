@@ -113,7 +113,6 @@
 
 // export default getLeaveRecords;
 
-
 import dotenv from 'dotenv';
 import LeaveRecords from '../../model/LeaveRecords';
 import Employee from '../../model/Employees';
@@ -123,27 +122,31 @@ dotenv.config();
 
 /**
  * Get leave records with comprehensive filtering
- * Filter Options: Employee, Leave type, Leave status, Date range, Department, Approver, Company
+ * Filter Options: Employee ID, Leave type ID, Leave status, Date range, Department ID, Approver ID, Company
  */
 const getLeaveRecords = async (req, res) => {
     try {
         const {
             page = 1,
             limit = 10,
-            // Leave filters
+            // Leave filters - ID-based (RECOMMENDED)
+            leaveTypeId, // Leave type schema reference
+            // Leave filters - Name-based (Backward compatibility)
+            leaveType, // Deprecated - use leaveTypeId
             status, // Pending, Approved, Declined, Cancelled
-            leaveType,
-            leaveTypeId,
             // Date filters
             startDate,
             endDate,
-            // Employee filters
-            employeeId,
-            employeeName,
-            department,
-            // Approver filters
-            approver,
-            approverId,
+            // Employee filters - ID-based (RECOMMENDED)
+            employeeId, // Employee reference
+            departmentId, // Department schema reference
+            // Employee filters - Name-based (Backward compatibility)
+            employeeName, // Deprecated - use employeeId
+            department, // Deprecated - use departmentId
+            // Approver filters - ID-based (RECOMMENDED)
+            approverId, // Approver reference
+            // Approver filters - Name-based (Backward compatibility)
+            approver, // Deprecated - use approverId
             // Company filter
             companyId: queryCompanyId,
             // Search
@@ -204,38 +207,47 @@ const getLeaveRecords = async (req, res) => {
             ];
         }
 
-        // Leave filters
+        // Leave filters - PRIORITY: Use IDs if provided, fallback to names
         if (status) {
             filterQuery.status = status;
         }
-        if (leaveType) {
+
+        if (leaveTypeId) {
+            // ✅ RECOMMENDED: Filter by leave type ID
+            filterQuery.leaveTypeId = leaveTypeId;
+        } else if (leaveType) {
+            // ⚠️ FALLBACK: Filter by leave type name (for backward compatibility)
             filterQuery.leaveTypeName = { $regex: leaveType, $options: 'i' };
         }
-        if (leaveTypeId) {
-            filterQuery.leaveTypeId = leaveTypeId;
-        }
 
-        // Employee filters
+        // Employee filters - PRIORITY: Use IDs if provided, fallback to names
         if (employeeId) {
+            // ✅ RECOMMENDED: Filter by employee ID
             filterQuery.userId = employeeId;
-        }
-        if (employeeName) {
+        } else if (employeeName) {
+            // ⚠️ FALLBACK: Filter by employee name (for backward compatibility)
             filterQuery.$or = [
                 { firstName: { $regex: employeeName, $options: 'i' } },
                 { lastName: { $regex: employeeName, $options: 'i' } },
                 { fullName: { $regex: employeeName, $options: 'i' } }
             ];
         }
-        if (department) {
+
+        if (departmentId) {
+            // ✅ RECOMMENDED: Filter by department ID
+            filterQuery.departmentId = departmentId;
+        } else if (department) {
+            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
-        // Approver filters
-        if (approver) {
-            filterQuery.approver = { $regex: approver, $options: 'i' };
-        }
+        // Approver filters - PRIORITY: Use IDs if provided, fallback to names
         if (approverId) {
+            // ✅ RECOMMENDED: Filter by approver ID
             filterQuery.leaveApprover = approverId;
+        } else if (approver) {
+            // ⚠️ FALLBACK: Filter by approver name (for backward compatibility)
+            filterQuery.approver = { $regex: approver, $options: 'i' };
         }
 
         // Company filter (only for super admins)
@@ -286,6 +298,8 @@ const getLeaveRecords = async (req, res) => {
                 .skip(skip)
                 .populate('userId', 'firstName lastName email profilePic')
                 .populate('leaveTypeId', 'leaveName')
+                .populate('departmentId', 'departmentName')
+                .populate('leaveApprover', 'firstName lastName fullName')
                 .lean()
                 .exec(),
             LeaveRecords.countDocuments(filterQuery)
@@ -317,15 +331,16 @@ const getLeaveRecords = async (req, res) => {
             },
             filters: {
                 status,
-                leaveType,
                 leaveTypeId,
+                leaveType,
                 startDate,
                 endDate,
                 employeeId,
                 employeeName,
+                departmentId,
                 department,
-                approver,
                 approverId,
+                approver,
                 search
             },
             message: leaveRecords.length === 0 ? 'No leave records found matching the criteria' : undefined
