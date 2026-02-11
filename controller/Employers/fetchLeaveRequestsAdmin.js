@@ -130,8 +130,6 @@
 //     }
 // }
 // export default fetchExpenseReqsAdmin;
-
-
 import dotenv from 'dotenv';
 import ExpenseRequests from '../../model/ExpenseRequests';
 import Employee from '../../model/Employees';
@@ -142,7 +140,7 @@ dotenv.config();
 /**
  * Fetch expense requests for admin/manager with comprehensive filtering
  * Filter Options: Employee ID, Expense type ID, Approval status, Payment status,
- * Date range, Amount range, Department ID, Company
+ * Date range, Amount range, Department (name-based), Company
  */
 const fetchExpenseReqsAdmin = async (req, res) => {
     try {
@@ -151,10 +149,9 @@ const fetchExpenseReqsAdmin = async (req, res) => {
             limit = 10,
             // Employee filters - ID-based (RECOMMENDED)
             employeeId, // Employee reference
-            departmentId, // Department schema reference
             // Employee filters - Name-based (Backward compatibility)
             employeeName, // Deprecated - use employeeId
-            department, // Deprecated - use departmentId
+            department, // Department name (no ID in ExpenseRequests schema)
             // Expense filters - ID-based (RECOMMENDED)
             expenseTypeId, // Expense type schema reference
             // Expense filters - Name-based (Backward compatibility)
@@ -238,11 +235,8 @@ const fetchExpenseReqsAdmin = async (req, res) => {
             ];
         }
 
-        if (departmentId) {
-            // ✅ RECOMMENDED: Filter by department ID
-            filterQuery.departmentId = departmentId;
-        } else if (department) {
-            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
+        // Department filter (name-based only - no departmentId in schema)
+        if (department) {
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
@@ -295,6 +289,7 @@ const fetchExpenseReqsAdmin = async (req, res) => {
         const sortOptions = { [sortBy]: sortDirection };
 
         // Execute query and count in parallel
+        // NOTE: departmentId is NOT populated as it doesn't exist in ExpenseRequests schema
         const [expenses, totalCount] = await Promise.all([
             ExpenseRequests.find(filterQuery)
                 .sort(sortOptions)
@@ -302,7 +297,6 @@ const fetchExpenseReqsAdmin = async (req, res) => {
                 .skip(skip)
                 .populate('expenseTypeId', 'name description')
                 .populate('employeeId', 'firstName lastName email profilePic department')
-                .populate('departmentId', 'departmentName')
                 .populate('approverId', 'firstName lastName email')
                 .lean()
                 .exec(),
@@ -330,7 +324,6 @@ const fetchExpenseReqsAdmin = async (req, res) => {
             filters: {
                 employeeId,
                 employeeName,
-                departmentId,
                 department,
                 expenseTypeId,
                 expenseCategory,

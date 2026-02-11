@@ -121,7 +121,7 @@ dotenv.config();
 /**
  * Fetch expense requests with comprehensive filtering
  * Filter Options: Employee ID, Expense type ID, Approval status, Payment status,
- * Date range, Amount range, Department ID, Company
+ * Date range, Amount range, Department (name-based), Company
  */
 const fetchExpenseReqs = async (req, res) => {
     try {
@@ -130,10 +130,9 @@ const fetchExpenseReqs = async (req, res) => {
             limit = 10,
             // Employee filters - ID-based (RECOMMENDED)
             employeeId, // Employee reference
-            departmentId, // Department schema reference
             // Employee filters - Name-based (Backward compatibility)
             employeeName, // Deprecated - use employeeId
-            department, // Deprecated - use departmentId
+            department, // Department name (no ID in ExpenseRequests schema)
             // Expense filters - ID-based (RECOMMENDED)
             expenseTypeId, // Expense type schema reference
             // Expense filters - Name-based (Backward compatibility)
@@ -219,11 +218,8 @@ const fetchExpenseReqs = async (req, res) => {
             ];
         }
 
-        if (departmentId) {
-            // ✅ RECOMMENDED: Filter by department ID
-            filterQuery.departmentId = departmentId;
-        } else if (department) {
-            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
+        // Department filter (name-based only - no departmentId in schema)
+        if (department) {
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
@@ -276,6 +272,7 @@ const fetchExpenseReqs = async (req, res) => {
         const sortOptions = { [sortBy]: sortDirection };
 
         // Execute query and count in parallel
+        // NOTE: departmentId is NOT populated as it doesn't exist in ExpenseRequests schema
         const [expenseRequests, totalCount] = await Promise.all([
             ExpenseRequests.find(filterQuery)
                 .sort(sortOptions)
@@ -283,7 +280,6 @@ const fetchExpenseReqs = async (req, res) => {
                 .skip(skip)
                 .populate('expenseTypeId', 'name description')
                 .populate('employeeId', 'firstName lastName email profilePic')
-                .populate('departmentId', 'departmentName')
                 .populate('approver', 'firstName lastName email')
                 .lean()
                 .exec(),
@@ -323,7 +319,6 @@ const fetchExpenseReqs = async (req, res) => {
             filters: {
                 employeeId,
                 employeeName,
-                departmentId,
                 department,
                 expenseTypeId,
                 expenseCategory,
