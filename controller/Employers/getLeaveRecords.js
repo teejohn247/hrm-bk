@@ -112,6 +112,250 @@
 // };
 
 // export default getLeaveRecords;
+
+
+// import dotenv from 'dotenv';
+// import LeaveRecords from '../../model/LeaveRecords';
+// import Employee from '../../model/Employees';
+// import Company from '../../model/Company';
+
+// dotenv.config();
+
+// /**
+//  * Get leave records with comprehensive filtering
+//  * Filter Options: Employee ID, Leave type ID, Leave status, Date range, Department (name-based), Approver ID, Company
+//  */
+// const getLeaveRecords = async (req, res) => {
+//     try {
+//         const {
+//             page = 1,
+//             limit = 10,
+//             // Leave filters - ID-based (RECOMMENDED)
+//             leaveTypeId, // Leave type schema reference
+//             // Leave filters - Name-based (Backward compatibility)
+//             leaveType, // Deprecated - use leaveTypeId
+//             status, // Pending, Approved, Declined, Cancelled
+//             // Date filters
+//             startDate,
+//             endDate,
+//             // Employee filters - ID-based (RECOMMENDED)
+//             employeeId, // Employee reference
+//             // Employee filters - Name-based (Backward compatibility)
+//             employeeName, // Deprecated - use employeeId
+//             department, // Department name (no ID in LeaveRecords schema)
+//             // Approver filters - ID-based (RECOMMENDED)
+//             approverId, // Approver reference
+//             // Approver filters - Name-based (Backward compatibility)
+//             approver, // Deprecated - use approverId
+//             // Company filter
+//             companyId: queryCompanyId,
+//             // Search
+//             search,
+//             // Sorting
+//             sortBy = 'createdAt',
+//             sortOrder = 'desc'
+//         } = req.query;
+
+//         const userId = req.payload.id;
+
+//         // Parse pagination
+//         const pageNum = Math.max(1, parseInt(page));
+//         const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+//         const skip = (pageNum - 1) * limitNum;
+
+//         // Determine user type
+//         const [employee, company] = await Promise.all([
+//             Employee.findById(userId).select('companyId isManager').lean(),
+//             Company.findById(userId).lean()
+//         ]);
+
+//         if (!employee && !company) {
+//             return res.status(404).json({
+//                 status: 404,
+//                 success: false,
+//                 error: 'User not found'
+//             });
+//         }
+
+//         // Build filter query
+//         let filterQuery = {};
+
+//         // Set base filter based on user type
+//         if (company) {
+//             // Company admin sees all company leaves
+//             filterQuery.companyId = userId;
+//         } else if (employee) {
+//             if (employee.isManager) {
+//                 // Managers see their team's leaves
+//                 filterQuery.companyId = employee.companyId;
+//             } else {
+//                 // Regular employees see only their own leaves
+//                 filterQuery.userId = userId;
+//                 filterQuery.companyId = employee.companyId;
+//             }
+//         }
+
+//         // Search across multiple fields
+//         if (search && search !== 'undefined' && search !== '') {
+//             filterQuery.$or = [
+//                 { firstName: { $regex: search, $options: 'i' } },
+//                 { lastName: { $regex: search, $options: 'i' } },
+//                 { reason: { $regex: search, $options: 'i' } },
+//                 { comments: { $regex: search, $options: 'i' } },
+//                 { leaveTypeName: { $regex: search, $options: 'i' } },
+//                 { department: { $regex: search, $options: 'i' } }
+//             ];
+//         }
+
+//         // Leave filters - PRIORITY: Use IDs if provided, fallback to names
+//         if (status) {
+//             filterQuery.status = status;
+//         }
+
+//         if (leaveTypeId) {
+//             // ✅ RECOMMENDED: Filter by leave type ID
+//             filterQuery.leaveTypeId = leaveTypeId;
+//         } else if (leaveType) {
+//             // ⚠️ FALLBACK: Filter by leave type name (for backward compatibility)
+//             filterQuery.leaveTypeName = { $regex: leaveType, $options: 'i' };
+//         }
+
+//         // Employee filters - PRIORITY: Use IDs if provided, fallback to names
+//         if (employeeId) {
+//             // ✅ RECOMMENDED: Filter by employee ID
+//             filterQuery.userId = employeeId;
+//         } else if (employeeName) {
+//             // ⚠️ FALLBACK: Filter by employee name (for backward compatibility)
+//             filterQuery.$or = [
+//                 { firstName: { $regex: employeeName, $options: 'i' } },
+//                 { lastName: { $regex: employeeName, $options: 'i' } },
+//                 { fullName: { $regex: employeeName, $options: 'i' } }
+//             ];
+//         }
+
+//         // Department filter (name-based only - no departmentId in schema)
+//         if (department) {
+//             filterQuery.department = { $regex: department, $options: 'i' };
+//         }
+
+//         // Approver filters - PRIORITY: Use IDs if provided, fallback to names
+//         if (approverId) {
+//             // ✅ RECOMMENDED: Filter by approver ID
+//             filterQuery.leaveApprover = approverId;
+//         } else if (approver) {
+//             // ⚠️ FALLBACK: Filter by approver name (for backward compatibility)
+//             filterQuery.approver = { $regex: approver, $options: 'i' };
+//         }
+
+//         // Company filter (only for super admins)
+//         if (queryCompanyId && company) {
+//             filterQuery.companyId = queryCompanyId;
+//         }
+
+//         // Date range filters - overlapping leaves
+//         if (startDate || endDate) {
+//             if (startDate && endDate) {
+//                 // Find leaves that overlap with date range
+//                 filterQuery.$or = [
+//                     {
+//                         leaveStartDate: {
+//                             $gte: new Date(startDate),
+//                             $lte: new Date(endDate)
+//                         }
+//                     },
+//                     {
+//                         leaveEndDate: {
+//                             $gte: new Date(startDate),
+//                             $lte: new Date(endDate)
+//                         }
+//                     },
+//                     {
+//                         $and: [
+//                             { leaveStartDate: { $lte: new Date(startDate) } },
+//                             { leaveEndDate: { $gte: new Date(endDate) } }
+//                         ]
+//                     }
+//                 ];
+//             } else if (startDate) {
+//                 filterQuery.leaveStartDate = { $gte: new Date(startDate) };
+//             } else if (endDate) {
+//                 filterQuery.leaveEndDate = { $lte: new Date(endDate) };
+//             }
+//         }
+
+//         // Build sort options
+//         const sortDirection = sortOrder.toLowerCase() === 'desc' ? -1 : 1;
+//         const sortOptions = { [sortBy]: sortDirection };
+
+//         // Execute query and count in parallel
+//         // NOTE: departmentId is NOT populated as it doesn't exist in LeaveRecords schema
+//         const [leaveRecords, totalCount] = await Promise.all([
+//             LeaveRecords.find(filterQuery)
+//                 .sort(sortOptions)
+//                 .limit(limitNum)
+//                 .skip(skip)
+//                 .populate('userId', 'firstName lastName email profilePic')
+//                 .populate('leaveTypeId', 'leaveName')
+//                 .populate('leaveApprover', 'firstName lastName fullName')
+//                 .lean()
+//                 .exec(),
+//             LeaveRecords.countDocuments(filterQuery)
+//         ]);
+
+//         const totalPages = Math.ceil(totalCount / limitNum);
+
+//         // Calculate statistics
+//         const statistics = {
+//             total: totalCount,
+//             pending: await LeaveRecords.countDocuments({ ...filterQuery, status: 'Pending' }),
+//             approved: await LeaveRecords.countDocuments({ ...filterQuery, status: 'Approved' }),
+//             declined: await LeaveRecords.countDocuments({ ...filterQuery, status: 'Declined' }),
+//             cancelled: await LeaveRecords.countDocuments({ ...filterQuery, status: 'Cancelled' })
+//         };
+
+//         return res.status(200).json({
+//             status: 200,
+//             success: true,
+//             data: leaveRecords,
+//             statistics,
+//             pagination: {
+//                 total: totalCount,
+//                 totalPages,
+//                 currentPage: pageNum,
+//                 limit: limitNum,
+//                 hasNextPage: pageNum < totalPages,
+//                 hasPrevPage: pageNum > 1
+//             },
+//             filters: {
+//                 status,
+//                 leaveTypeId,
+//                 leaveType,
+//                 startDate,
+//                 endDate,
+//                 employeeId,
+//                 employeeName,
+//                 department,
+//                 approverId,
+//                 approver,
+//                 search
+//             },
+//             message: leaveRecords.length === 0 ? 'No leave records found matching the criteria' : undefined
+//         });
+
+//     } catch (error) {
+//         console.error('Error fetching leave records:', error);
+//         return res.status(500).json({
+//             status: 500,
+//             success: false,
+//             error: 'Failed to fetch leave records',
+//             message: process.env.NODE_ENV === 'development' ? error.message : undefined
+//         });
+//     }
+// };
+
+// export default getLeaveRecords;
+
+
 import dotenv from 'dotenv';
 import LeaveRecords from '../../model/LeaveRecords';
 import Employee from '../../model/Employees';
@@ -120,33 +364,22 @@ import Company from '../../model/Company';
 dotenv.config();
 
 /**
- * Get leave records with comprehensive filtering
- * Filter Options: Employee ID, Leave type ID, Leave status, Date range, Department (name-based), Approver ID, Company
+ * Get leave records - Returns user's own leave requests
+ * Managers see only their own requests (not their team's)
+ * Filter Options: Leave type ID, Leave status, Date range, Search
  */
 const getLeaveRecords = async (req, res) => {
     try {
         const {
             page = 1,
             limit = 10,
-            // Leave filters - ID-based (RECOMMENDED)
-            leaveTypeId, // Leave type schema reference
-            // Leave filters - Name-based (Backward compatibility)
-            leaveType, // Deprecated - use leaveTypeId
-            status, // Pending, Approved, Declined, Cancelled
+            // Leave filters
+            leaveTypeId,
+            leaveType,
+            status,
             // Date filters
             startDate,
             endDate,
-            // Employee filters - ID-based (RECOMMENDED)
-            employeeId, // Employee reference
-            // Employee filters - Name-based (Backward compatibility)
-            employeeName, // Deprecated - use employeeId
-            department, // Department name (no ID in LeaveRecords schema)
-            // Approver filters - ID-based (RECOMMENDED)
-            approverId, // Approver reference
-            // Approver filters - Name-based (Backward compatibility)
-            approver, // Deprecated - use approverId
-            // Company filter
-            companyId: queryCompanyId,
             // Search
             search,
             // Sorting
@@ -183,77 +416,34 @@ const getLeaveRecords = async (req, res) => {
             // Company admin sees all company leaves
             filterQuery.companyId = userId;
         } else if (employee) {
-            if (employee.isManager) {
-                // Managers see their team's leaves
-                filterQuery.companyId = employee.companyId;
-            } else {
-                // Regular employees see only their own leaves
-                filterQuery.userId = userId;
-                filterQuery.companyId = employee.companyId;
-            }
+            // ALL employees (including managers) see only their OWN leave requests
+            filterQuery.userId = userId;
+            filterQuery.companyId = employee.companyId;
         }
 
         // Search across multiple fields
         if (search && search !== 'undefined' && search !== '') {
             filterQuery.$or = [
-                { firstName: { $regex: search, $options: 'i' } },
-                { lastName: { $regex: search, $options: 'i' } },
                 { reason: { $regex: search, $options: 'i' } },
                 { comments: { $regex: search, $options: 'i' } },
-                { leaveTypeName: { $regex: search, $options: 'i' } },
-                { department: { $regex: search, $options: 'i' } }
+                { leaveTypeName: { $regex: search, $options: 'i' } }
             ];
         }
 
-        // Leave filters - PRIORITY: Use IDs if provided, fallback to names
+        // Leave filters
         if (status) {
             filterQuery.status = status;
         }
 
         if (leaveTypeId) {
-            // ✅ RECOMMENDED: Filter by leave type ID
             filterQuery.leaveTypeId = leaveTypeId;
         } else if (leaveType) {
-            // ⚠️ FALLBACK: Filter by leave type name (for backward compatibility)
             filterQuery.leaveTypeName = { $regex: leaveType, $options: 'i' };
-        }
-
-        // Employee filters - PRIORITY: Use IDs if provided, fallback to names
-        if (employeeId) {
-            // ✅ RECOMMENDED: Filter by employee ID
-            filterQuery.userId = employeeId;
-        } else if (employeeName) {
-            // ⚠️ FALLBACK: Filter by employee name (for backward compatibility)
-            filterQuery.$or = [
-                { firstName: { $regex: employeeName, $options: 'i' } },
-                { lastName: { $regex: employeeName, $options: 'i' } },
-                { fullName: { $regex: employeeName, $options: 'i' } }
-            ];
-        }
-
-        // Department filter (name-based only - no departmentId in schema)
-        if (department) {
-            filterQuery.department = { $regex: department, $options: 'i' };
-        }
-
-        // Approver filters - PRIORITY: Use IDs if provided, fallback to names
-        if (approverId) {
-            // ✅ RECOMMENDED: Filter by approver ID
-            filterQuery.leaveApprover = approverId;
-        } else if (approver) {
-            // ⚠️ FALLBACK: Filter by approver name (for backward compatibility)
-            filterQuery.approver = { $regex: approver, $options: 'i' };
-        }
-
-        // Company filter (only for super admins)
-        if (queryCompanyId && company) {
-            filterQuery.companyId = queryCompanyId;
         }
 
         // Date range filters - overlapping leaves
         if (startDate || endDate) {
             if (startDate && endDate) {
-                // Find leaves that overlap with date range
                 filterQuery.$or = [
                     {
                         leaveStartDate: {
@@ -286,13 +476,11 @@ const getLeaveRecords = async (req, res) => {
         const sortOptions = { [sortBy]: sortDirection };
 
         // Execute query and count in parallel
-        // NOTE: departmentId is NOT populated as it doesn't exist in LeaveRecords schema
         const [leaveRecords, totalCount] = await Promise.all([
             LeaveRecords.find(filterQuery)
                 .sort(sortOptions)
                 .limit(limitNum)
                 .skip(skip)
-                .populate('userId', 'firstName lastName email profilePic')
                 .populate('leaveTypeId', 'leaveName')
                 .populate('leaveApprover', 'firstName lastName fullName')
                 .lean()
@@ -330,13 +518,9 @@ const getLeaveRecords = async (req, res) => {
                 leaveType,
                 startDate,
                 endDate,
-                employeeId,
-                employeeName,
-                department,
-                approverId,
-                approver,
                 search
             },
+            userType: company ? 'company' : (employee?.isManager ? 'manager' : 'employee'),
             message: leaveRecords.length === 0 ? 'No leave records found matching the criteria' : undefined
         });
 
