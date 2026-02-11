@@ -112,7 +112,6 @@
 // };
 
 // export default getLeaveRecords;
-
 import dotenv from 'dotenv';
 import LeaveRecords from '../../model/LeaveRecords';
 import Employee from '../../model/Employees';
@@ -122,7 +121,7 @@ dotenv.config();
 
 /**
  * Get leave records with comprehensive filtering
- * Filter Options: Employee ID, Leave type ID, Leave status, Date range, Department ID, Approver ID, Company
+ * Filter Options: Employee ID, Leave type ID, Leave status, Date range, Department (name-based), Approver ID, Company
  */
 const getLeaveRecords = async (req, res) => {
     try {
@@ -139,10 +138,9 @@ const getLeaveRecords = async (req, res) => {
             endDate,
             // Employee filters - ID-based (RECOMMENDED)
             employeeId, // Employee reference
-            departmentId, // Department schema reference
             // Employee filters - Name-based (Backward compatibility)
             employeeName, // Deprecated - use employeeId
-            department, // Deprecated - use departmentId
+            department, // Department name (no ID in LeaveRecords schema)
             // Approver filters - ID-based (RECOMMENDED)
             approverId, // Approver reference
             // Approver filters - Name-based (Backward compatibility)
@@ -233,11 +231,8 @@ const getLeaveRecords = async (req, res) => {
             ];
         }
 
-        if (departmentId) {
-            // ✅ RECOMMENDED: Filter by department ID
-            filterQuery.departmentId = departmentId;
-        } else if (department) {
-            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
+        // Department filter (name-based only - no departmentId in schema)
+        if (department) {
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
@@ -291,6 +286,7 @@ const getLeaveRecords = async (req, res) => {
         const sortOptions = { [sortBy]: sortDirection };
 
         // Execute query and count in parallel
+        // NOTE: departmentId is NOT populated as it doesn't exist in LeaveRecords schema
         const [leaveRecords, totalCount] = await Promise.all([
             LeaveRecords.find(filterQuery)
                 .sort(sortOptions)
@@ -298,7 +294,6 @@ const getLeaveRecords = async (req, res) => {
                 .skip(skip)
                 .populate('userId', 'firstName lastName email profilePic')
                 .populate('leaveTypeId', 'leaveName')
-                .populate('departmentId', 'departmentName')
                 .populate('leaveApprover', 'firstName lastName fullName')
                 .lean()
                 .exec(),
@@ -337,7 +332,6 @@ const getLeaveRecords = async (req, res) => {
                 endDate,
                 employeeId,
                 employeeName,
-                departmentId,
                 department,
                 approverId,
                 approver,
