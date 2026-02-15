@@ -18,6 +18,32 @@ sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 dotenv.config();
 
+/**
+ * Get effective modules (permissions) for user based on isSuperAdmin and isManager.
+ * - isSuperAdmin true → Super Admin role permissions
+ * - isManager true (and !isSuperAdmin) → Manager role permissions
+ * - else → Staff role permissions
+ */
+function getEffectiveModules(companyFeatures, systemRoles, isSuperAdmin, isManager) {
+    if (!companyFeatures || !systemRoles?.length) return companyFeatures;
+
+    let roleName = 'Staff';
+    if (isSuperAdmin === true) roleName = 'Super Admin';
+    else if (isManager === true) roleName = 'Manager';
+
+    const role = systemRoles.find(r => {
+        const name = (r.roleName || '').trim();
+        return name.toLowerCase() === roleName.toLowerCase();
+    });
+
+    if (!role?.rolePermissions?.length) return companyFeatures;
+
+    return {
+        ...companyFeatures,
+        modules: role.rolePermissions,
+    };
+}
+
 const signin = async (req, res) => {
 
     try {
@@ -41,7 +67,7 @@ const signin = async (req, res) => {
             return;
         }
 
-        if (email === 'erp@makersorbit.com') {
+        if (email === 'erp@makersorbit.com' || email === 'aceerp@aceall.io') {
             let superAdmin = await AceERP.findOne({ email: email });
             
             if (!superAdmin) {
@@ -69,8 +95,18 @@ const signin = async (req, res) => {
 
             const { systemRoles, ...adminWithoutRoles } = superAdmin.toObject();
             delete adminWithoutRoles.systemRoles; // Ensure systemRoles is not included
-            adminWithoutRoles.modules =  superAdmin?.companyId?.companyFeatures,
-            adminWithoutRoles.systemRoles = superAdmin?.companyId?.systemRoles
+            const companyData = superAdmin?.companyId;
+            if (companyData?.companyFeatures) {
+                adminWithoutRoles.modules = getEffectiveModules(
+                    companyData.companyFeatures,
+                    companyData.systemRoles || [],
+                    true,
+                    false
+                );
+            } else {
+                adminWithoutRoles.modules = companyData?.companyFeatures;
+            }
+            adminWithoutRoles.systemRoles = companyData?.systemRoles;
 
             res.status(200).json({
                 status: 200,
@@ -145,7 +181,12 @@ const signin = async (req, res) => {
             delete userWithoutRoles.systemRoles; // Ensure systemRoles is not included
 
             if (company?.companyFeatures) {
-                userWithoutRoles.modules = company.companyFeatures;
+                userWithoutRoles.modules = getEffectiveModules(
+                    company.companyFeatures,
+                    company.systemRoles || [],
+                    company.isSuperAdmin,
+                    false
+                );
             }
             if (company?.systemRoles) {
                 userWithoutRoles.systemRoles = company.systemRoles;
@@ -246,7 +287,12 @@ const signin = async (req, res) => {
 
             if (employeeCompany) {
                 if (employeeCompany?.companyFeatures) {
-                    userWithoutRoles.modules = employeeCompany.companyFeatures;
+                    userWithoutRoles.modules = getEffectiveModules(
+                        employeeCompany.companyFeatures,
+                        employeeCompany.systemRoles || [],
+                        employee.isSuperAdmin,
+                        employee.isManager
+                    );
                 }
                 if (employeeCompany?.systemRoles) {
                     userWithoutRoles.systemRoles = employeeCompany.systemRoles;

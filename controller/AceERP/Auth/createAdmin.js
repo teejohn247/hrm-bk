@@ -17,7 +17,7 @@ const generatePasswordForAceERP = async (req, res) => {
     try {
         const email = 'erp@makersorbit.com';
         const randomBytes = crypto.randomBytes(12).toString('hex');
-        const specialChars = '!@#$%^&*';
+        const specialChars = '!@$%^&*';
         const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         
         // Add 2 random special characters and 2 uppercase letters

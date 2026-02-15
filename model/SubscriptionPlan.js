@@ -43,6 +43,10 @@ const subscriptionPlanSchema = new mongoose.Schema({
             name: {
                 type: String,
                 required: true
+            },
+            permissionType: {
+                type: String,
+                required: true
             }
         }]
     }]

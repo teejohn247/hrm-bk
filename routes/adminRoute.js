@@ -215,6 +215,10 @@ import role from '../controller/AceERP/Auth/roles';
 import fetchAdminRoles from '../controller/AceERP/Auth/fetchRoles';
 import toggleModule from '../controller/AceERP/Auth/toggleModule';
 import fetchModules from '../controller/AceERP/Auth/fetchModules';
+import createModule from '../controller/AceERP/Auth/createModule';
+import updateModule from '../controller/AceERP/Auth/updateModule';
+import deleteModule from '../controller/AceERP/Auth/deleteModule';
+import fetchModuleById from '../controller/AceERP/Auth/fetchModuleById';
 import getOrders from '../controller/order/getOrders';
 import getOrder from '../controller/order/getOrder';
 import updateOrder from '../controller/order/updateOrder';
@@ -479,6 +483,7 @@ router.post("/upload-cv", upload.single("payroll"), (req, res) => {
 // import passport from 'passport';
 // import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import updateCompanyByCompany from '../controller/AceERP/Auth/updateCompanyByCompany';
+import updateCompanyLogo from '../controller/AceERP/Auth/updateCompanyLogo';
 import assignSalaryScale from '../controller/salaryScale/assignSalaryScale';
 import deleteRolePermissions from '../controller/AceERP/Auth/deleteRolePermission';
 import syncCompanyFeaturesToRoles from '../controller/AceERP/Auth/syncCompanyFeaturesToRoles';
@@ -810,6 +815,10 @@ router.delete('/delete-order/:id', auth, deleteOrder)
 router.patch('/editCompany/:id', auth, editCompany);
 router.post('/createPermission', auth, addPermission);
 router.get('/fetchModules', auth, fetchModules);
+router.get('/modules/:id', auth, fetchModuleById);
+router.post('/modules', auth, createModule);
+router.patch('/modules/:id', auth, updateModule);
+router.delete('/modules/:id', auth, deleteModule);
 // router.get('/fetchModule/:id', auth, moduleController.fetchModule);
 router.post('/createRole', auth, role);
 router.get('/roles', auth, fetchAdminRoles);
@@ -846,6 +855,7 @@ router.post('/createMediaFeed', auth, upload.single("image"), imageUploader, cre
 router.get('/leaveGraphDetails', auth, leaveRecordsDetails);
 
 router.patch('/updateCompany/:id', auth, updateCompanyByCompany);
+router.patch('/company/:id/logo', auth, upload.single('companyLogo'), imageUploader, updateCompanyLogo);
 router.patch('/assignSalaryScale', auth, assignSalaryScale);
 router.delete('/deleteRolePermissions/:companyId', auth, deleteRolePermissions);
 
