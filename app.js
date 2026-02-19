@@ -16,15 +16,7 @@ import daysUsed from './cron/daysUsed';
 import createSubdomainForAmplifyApp from './config/sub-domain';
 import cron from 'node-cron';
 import { updateSubscriptionStatuses } from './utils/subscriptionStatusManager';
-// Swagger imports (optional - only if package is installed)
-let swaggerUi, swaggerJsdoc;
-// try {
-//   swaggerUi = require('swagger-ui-express');
-//   swaggerJsdoc = require('swagger-jsdoc');
-// } catch (error) {
-//   console.log('Swagger packages not installed. API docs will not be available.');
-//   console.log('To enable Swagger, run: npm install swagger-jsdoc --save');
-// }
+import { swaggerSpec, swaggerUi } from './config/swagger.js';
 
 const upload = multer()
 const app = express();
@@ -145,63 +137,22 @@ app.post('/create-subdomain', async (req, res) => {
   }
 });
 
-// Swagger configuration (only if packages are installed)
-// if (swaggerUi && swaggerJsdoc) {
-//   const swaggerOptions = {
-//     definition: {
-//       openapi: '3.0.0',
-//       info: {
-//         title: 'ACEALL ERP API',
-//         version: '1.0.0',
-//         description: 'API documentation for ACEALL ERP Backend System',
-//         contact: {
-//           name: 'API Support',
-//           email: 'info@acehr.com'
-//         }
-//       },
-//       servers: [
-//         {
-//           url: `http://localhost:${port}/api/v1`,
-//           description: 'Development server'
-//         }
-//       ],
-//       components: {
-//         securitySchemes: {
-//           bearerAuth: {
-//             type: 'http',
-//             scheme: 'bearer',
-//             bearerFormat: 'JWT',
-//             description: 'Enter JWT token obtained from /api/v1/signIn endpoint'
-//           }
-//         }
-//       },
-//       security: [
-//         {
-//           bearerAuth: []
-//         }
-//       ]
-//     },
-//     apis: ['./routes/*.js', './controller/**/*.js']
-//   };
-
-//   const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
-//   // Swagger UI endpoint
-//   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-//     customCss: '.swagger-ui .topbar { display: none }',
-//     customSiteTitle: 'ACEALL ERP API Documentation'
-//   }));
-
-//   // Swagger JSON endpoint
-//   app.get('/api-docs.json', (req, res) => {
-//     res.setHeader('Content-Type', 'application/json');
-//     res.send(swaggerSpec);
-//   });
-// }
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'ACEALL ERP API Documentation'
+}));
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 app.use('/api/v1', userRouter);
 
-server.listen(port, () => console.log(`Server has started. ${port}`))
+server.listen(port, () => {
+  console.log(`Server has started. ${port}`);
+  console.log(`Swagger UI: http://localhost:${port}/api-docs`);
+})
 
 // server.listen(port, () => {
 //   console.log(`Server has started. ${port}`)

@@ -188,10 +188,14 @@ import Company from '../../model/Company';
 
 dotenv.config();
 
+/** True if string looks like a MongoDB ObjectId (24 hex chars) */
+const isObjectId = (str) => typeof str === 'string' && /^[a-fA-F0-9]{24}$/.test(str);
+
 /**
  * Fetch employees with comprehensive filtering and pagination
  * Filter Options: Department ID, Designation ID, Employment status, Employment type,
  * Company, Location, Manager ID, Hire date range, Termination date range, Gender, Nationality
+ * Frontend may send department=ObjectId and designation=ObjectId; we treat those as IDs.
  */
 const fetchEmployees = async (req, res) => {
     try {
@@ -257,9 +261,10 @@ const fetchEmployees = async (req, res) => {
             });
         }
 
-        // Build filter query
+        // Build filter query - normalize companyId to string for consistent matching
+        const companyIdFilter = employee ? String(employee.companyId) : String(userId);
         const filterQuery = {
-            companyId: employee ? employee.companyId : userId
+            companyId: companyIdFilter
         };
 
         // Search across multiple fields
@@ -279,20 +284,16 @@ const fetchEmployees = async (req, res) => {
             if (lastName) filterQuery.lastName = { $regex: lastName, $options: 'i' };
         }
 
-        // Job filters - PRIORITY: Use IDs if provided, fallback to names
-        if (departmentId) {
-            // ✅ RECOMMENDED: Filter by department ID
-            filterQuery.departmentId = departmentId;
+        // Job filters - frontend often sends department=ObjectId and designation=ObjectId
+        if (departmentId || (department && isObjectId(department))) {
+            filterQuery.departmentId = String(departmentId || department);
         } else if (department) {
-            // ⚠️ FALLBACK: Filter by department name (for backward compatibility)
             filterQuery.department = { $regex: department, $options: 'i' };
         }
 
-        if (designationId) {
-            // ✅ RECOMMENDED: Filter by designation ID
-            filterQuery.designationId = designationId;
+        if (designationId || (designation && isObjectId(designation))) {
+            filterQuery.designationId = String(designationId || designation);
         } else if (designation) {
-            // ⚠️ FALLBACK: Filter by designation name (for backward compatibility)
             filterQuery.designation = { $regex: designation, $options: 'i' };
         }
 

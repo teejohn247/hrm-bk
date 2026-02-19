@@ -408,14 +408,12 @@ const fetchExpenseReqs = async (req, res) => {
         // Build filter query
         let filterQuery = {};
 
-        // Set base filter based on user type
+        // Set base filter based on user type - normalize to string (schema uses String)
         if (company) {
-            // Company admin sees all expenses
-            filterQuery.companyId = userId;
+            filterQuery.companyId = String(userId);
         } else if (employee) {
-            // ALL employees (including managers) see only their OWN expense requests
-            filterQuery.employeeId = userId;
-            filterQuery.companyId = employee.companyId;
+            filterQuery.employeeId = String(userId);
+            filterQuery.companyId = String(employee.companyId);
         }
 
         // Search across multiple fields

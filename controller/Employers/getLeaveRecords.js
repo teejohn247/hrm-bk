@@ -411,14 +411,12 @@ const getLeaveRecords = async (req, res) => {
         // Build filter query
         let filterQuery = {};
 
-        // Set base filter based on user type
+        // Set base filter based on user type - normalize to string for schema (companyId/userId are String)
         if (company) {
-            // Company admin sees all company leaves
-            filterQuery.companyId = userId;
+            filterQuery.companyId = String(userId);
         } else if (employee) {
-            // ALL employees (including managers) see only their OWN leave requests
-            filterQuery.userId = userId;
-            filterQuery.companyId = employee.companyId;
+            filterQuery.userId = String(userId);
+            filterQuery.companyId = String(employee.companyId);
         }
 
         // Search across multiple fields
@@ -441,33 +439,19 @@ const getLeaveRecords = async (req, res) => {
             filterQuery.leaveTypeName = { $regex: leaveType, $options: 'i' };
         }
 
-        // Date range filters - overlapping leaves
+        // Date range filters - leaveStartDate/leaveEndDate are stored as strings (e.g. ISO date)
         if (startDate || endDate) {
-            if (startDate && endDate) {
-                filterQuery.$or = [
-                    {
-                        leaveStartDate: {
-                            $gte: new Date(startDate),
-                            $lte: new Date(endDate)
-                        }
-                    },
-                    {
-                        leaveEndDate: {
-                            $gte: new Date(startDate),
-                            $lte: new Date(endDate)
-                        }
-                    },
-                    {
-                        $and: [
-                            { leaveStartDate: { $lte: new Date(startDate) } },
-                            { leaveEndDate: { $gte: new Date(endDate) } }
-                        ]
-                    }
+            const startStr = startDate ? (typeof startDate === 'string' && startDate.length <= 10 ? startDate : new Date(startDate).toISOString().slice(0, 10)) : null;
+            const endStr = endDate ? (typeof endDate === 'string' && endDate.length <= 10 ? endDate : new Date(endDate).toISOString().slice(0, 10)) : null;
+            if (startStr && endStr) {
+                filterQuery.$and = [
+                    { leaveStartDate: { $lte: endStr } },
+                    { leaveEndDate: { $gte: startStr } }
                 ];
-            } else if (startDate) {
-                filterQuery.leaveStartDate = { $gte: new Date(startDate) };
-            } else if (endDate) {
-                filterQuery.leaveEndDate = { $lte: new Date(endDate) };
+            } else if (startStr) {
+                filterQuery.leaveEndDate = { $gte: startStr };
+            } else if (endStr) {
+                filterQuery.leaveStartDate = { $lte: endStr };
             }
         }
 

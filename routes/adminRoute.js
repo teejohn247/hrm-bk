@@ -484,6 +484,7 @@ router.post("/upload-cv", upload.single("payroll"), (req, res) => {
 // import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import updateCompanyByCompany from '../controller/AceERP/Auth/updateCompanyByCompany';
 import updateCompanyLogo from '../controller/AceERP/Auth/updateCompanyLogo';
+import updateCompanyCurrency from '../controller/AceERP/Auth/updateCompanyCurrency';
 import assignSalaryScale from '../controller/salaryScale/assignSalaryScale';
 import deleteRolePermissions from '../controller/AceERP/Auth/deleteRolePermission';
 import syncCompanyFeaturesToRoles from '../controller/AceERP/Auth/syncCompanyFeaturesToRoles';
@@ -507,6 +508,7 @@ import fixCourseQuizRelationships from '../controller/Quiz/fixCourseQuizRelation
 import updateAppraisalPeriod from '../controller/Appraisal/updateAppraisalPeriod.js';
 import importFreights from '../controller/Courier/importCourier.js';
 import uploadDocument from '../controller/Documents/UploadDocument.js';
+import uploadDocumentToGCS from '../middleware/uploadDocumentToGCS.js';
 import getDocuments from '../controller/Documents/fetchDocuments.js';
 import deleteDocument from '../controller/Documents/deleteDocument.js';
 
@@ -856,6 +858,7 @@ router.get('/leaveGraphDetails', auth, leaveRecordsDetails);
 
 router.patch('/updateCompany/:id', auth, updateCompanyByCompany);
 router.patch('/company/:id/logo', auth, upload.single('companyLogo'), imageUploader, updateCompanyLogo);
+router.patch('/company/:id/currency', auth, updateCompanyCurrency);
 router.patch('/assignSalaryScale', auth, assignSalaryScale);
 router.delete('/deleteRolePermissions/:companyId', auth, deleteRolePermissions);
 
@@ -954,7 +957,7 @@ router.patch('/approvePayroll/:id', auth, approvePayrollPeriod);
 router.patch('/disbursePayroll/:id', auth, disbursePayrollPeriod);
 
 // Document routes
-router.post('/uploadDocument', auth, upload.single("file"), imageUploader, uploadDocument);
+router.post('/uploadDocument', auth, upload.single("file"), uploadDocumentToGCS, uploadDocument);
 router.get('/fetchDocuments/:employeeId', auth, getDocuments);
 router.delete('/deleteDocument/:id', auth, deleteDocument);
 

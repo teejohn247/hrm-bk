@@ -9,3 +9,4 @@ yarn.lock
 .DS_Store
 .env.test
 .ebextensions
+config/makers-erp-gcs-key.json

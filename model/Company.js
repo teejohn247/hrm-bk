@@ -19,6 +19,7 @@ const CompanySchema = new mongoose.Schema({
     freeTrialExpired: { type: Boolean, default: false },
     dateCreated: { type: Date, default: Date.now },
     industry: { type: String },
+    currency: { type: String, default: '' },
     systemRoles:[
         {
             roleName: { type: String },

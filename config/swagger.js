@@ -33,15 +33,77 @@ const options = {
         }
       }
     },
-    security: [
-      {
-        bearerAuth: []
+    security: [{ bearerAuth: [] }],
+    paths: {
+      '/signIn': {
+        post: {
+          summary: 'User login (Company or Employee)',
+          tags: ['Authentication'],
+          security: [],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email', 'password'],
+                  properties: {
+                    email: { type: 'string', example: 'company@example.com' },
+                    password: { type: 'string', example: 'password123' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Login successful' },
+            400: { description: 'Invalid credentials' }
+          }
+        }
+      },
+      '/fetchModules': {
+        get: {
+          summary: 'Fetch all modules',
+          tags: ['AceERP'],
+          security: [{ bearerAuth: [] }],
+          responses: { 200: { description: 'List of modules' } }
+        }
+      },
+      '/subscriptionPlans': {
+        get: {
+          summary: 'Fetch subscription plans',
+          tags: ['AceERP'],
+          responses: { 200: { description: 'List of plans' } }
+        }
+      },
+      '/uploadDocument': {
+        post: {
+          summary: 'Upload employee document',
+          tags: ['Documents'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    file: { type: 'string', format: 'binary' },
+                    documentType: { type: 'string' },
+                    documentName: { type: 'string' },
+                    employeeId: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          responses: { 200: { description: 'Document uploaded' } }
+        }
       }
-    ]
+    }
   },
   apis: [
-    './routes/*.js',
-    './controller/**/*.js'
+    './routes/adminRoute.js',
+    './routes/leave.js'
   ]
 };
 
