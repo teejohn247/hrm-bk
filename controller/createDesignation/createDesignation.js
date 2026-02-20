@@ -285,7 +285,7 @@ const createDesignation = async (req, res) => {
     if (leaves.length !== leaveIds.length) {
       return res.status(400).json({
         status: 400,
-        error: "One or more leave types do not exist",
+        error: "No Leave Type Found, Please create a leave type to continue",
       });
     }
 
