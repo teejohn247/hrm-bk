@@ -309,7 +309,7 @@ const createDesignation = async (req, res) => {
       if (expenseIds.length !== expenseCard.length) {
         return res.status(400).json({
           status: 400,
-          error: "Expense id field is compulsory for all expense cards",
+          error: "No Expense Type Found, Please create an expense type to continue",
         });
       }
 
