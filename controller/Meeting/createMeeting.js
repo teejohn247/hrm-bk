@@ -223,6 +223,7 @@
 // export default createMeeting;
 
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { google } from 'googleapis';
 import Meeting from '../../model/Meetings';
 import Company from '../../model/Company';
@@ -393,10 +394,19 @@ const createMeeting = async (req, res) => {
         const guestDetails = [];
         const guestEmails = [];
 
+        // Match companyId as string or ObjectId — employees may store it either way
+        let companyIdQuery = { companyId };
+        try {
+            const oid = new mongoose.Types.ObjectId(companyId);
+            companyIdQuery = { $or: [{ companyId }, { companyId: oid }] };
+        } catch (_) {}
+
+        
+        console.log({companyIdQuery})
         for (const guestEmail of invitedGuests) {
             const guest = await Employee.findOne({ 
                 email: guestEmail,
-                companyId: companyId 
+                ...companyIdQuery 
             });
 
             if (guest) {
@@ -539,4 +549,5 @@ const createMeeting = async (req, res) => {
     }
 };
 
+export { createGoogleCalendarEvent };
 export default createMeeting;

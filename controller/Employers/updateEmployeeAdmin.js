@@ -367,6 +367,7 @@ const updateEmployeeAdmin = async (req, res) => {
         if (employmentType) updateData.employmentType = employmentType;
         if (employmentStartDate) updateData.employmentStartDate = employmentStartDate;
         if (image) updateData.profilePic = image;
+        if (req.body.profilePic) updateData.profilePic = req.body.profilePic;
 
         // Department-related fields
         if (department) {
@@ -376,11 +377,58 @@ const updateEmployeeAdmin = async (req, res) => {
             updateData.managerName = department.managerName;
         }
 
-        // Designation-related fields
+        // Designation-related fields + automatic entitlement recalculation
         if (designation) {
             updateData.designationId = designationId;
             updateData.designation = designation.designationName;
             updateData.designationName = designation.designationName;
+
+            // ── Leave entitlements ──────────────────────────────────────────
+            // For each leave type in the new designation:
+            //   - If employee already had this leave type, preserve daysUsed and
+            //     recalculate daysLeft = newAllowance - daysUsed
+            //   - If employee had no prior leave assignment, apply full allowance
+            const existingLeave = employee.leaveAssignment || [];
+            const newLeaveAssignment = (designation.leaveTypes || []).map(lt => {
+                const prior = existingLeave.find(
+                    el => el.leaveTypeId && lt.leaveTypeId && String(el.leaveTypeId) === String(lt.leaveTypeId)
+                );
+                const newAllowance = lt.noOfLeaveDays || 0;
+                const daysUsed = prior ? (prior.daysUsed || 0) : 0;
+                const daysLeft = Math.max(0, newAllowance - daysUsed);
+
+                return {
+                    leaveTypeId: lt.leaveTypeId,
+                    leaveName: lt.leaveName,
+                    noOfLeaveDays: newAllowance,
+                    assignedNoOfDays: newAllowance,
+                    description: lt.description || '',
+                    daysUsed,
+                    daysLeft
+                };
+            });
+            updateData.leaveAssignment = newLeaveAssignment;
+
+            // ── Expense card ────────────────────────────────────────────────
+            // Apply the new designation's expense card settings.
+            // cardBalance = new cardLimit - currentSpent (what's been spent in the current cycle).
+            // totalSpent accumulates forever and is preserved.
+            // If no prior expense details exist, apply full limit as balance.
+            if (designation.expenseCard && designation.expenseCard.length > 0) {
+                const newCard = designation.expenseCard[0];
+                const newLimit = parseFloat(newCard.cardLimit) || 0;
+                const currentSpent = employee.expenseDetails?.currentSpent || 0;
+                const newBalance = Math.max(0, newLimit - currentSpent);
+
+                updateData.expenseDetails = {
+                    ...(employee.expenseDetails || {}),
+                    expenseTypeId: newCard.expenseTypeId || employee.expenseDetails?.expenseTypeId || '',
+                    cardCurrency: newCard.cardCurrency || employee.expenseDetails?.cardCurrency || '',
+                    cardLimit: newLimit,
+                    cardBalance: newBalance,
+                    expiryDate: newCard.cardExpiryDate || employee.expenseDetails?.expiryDate || '',
+                };
+            }
         }
 
         // Salary scale fields

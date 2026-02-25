@@ -17,6 +17,8 @@ import createSubdomainForAmplifyApp from './config/sub-domain';
 import cron from 'node-cron';
 import { updateSubscriptionStatuses } from './utils/subscriptionStatusManager';
 import { swaggerSpec, swaggerUi } from './config/swagger.js';
+import copilotRouter from './routes/copilot';
+
 
 const upload = multer()
 const app = express();
@@ -68,6 +70,8 @@ app.use('/images', express.static('images'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.options('*', cors());
+
+app.use('/api/copilot', copilotRouter);
  
 const allowCrossDomain = (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
