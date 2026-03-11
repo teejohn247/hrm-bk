@@ -91,7 +91,8 @@ const subscriptionSchema = new mongoose.Schema({
             name: {
                 type: String,
                 required: true
-            }
+            },
+            value: { type: Boolean, default: false }
         }]
     }]
 }],
@@ -102,3 +103,21 @@ const subscriptionSchema = new mongoose.Schema({
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
 
 module.exports = Subscription;
+modules: [{
+  moduleId: { type: Number },
+  key: { type: String },
+  moduleName: { type: String },
+  value: { type: String },
+  active: {type: Boolean, default: false},
+  moduleFeatures: [{
+      featureId: { type: Number },
+      featureKey: { type: String },
+      featureName: { type: String },
+      featurePermissions: [{
+          key: { type: String },
+          name: { type: String },
+          permissionType: {type: String},
+          value: { type: Boolean, default: false }
+      }]
+  }]
+}]
