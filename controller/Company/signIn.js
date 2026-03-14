@@ -67,7 +67,7 @@ const signin = async (req, res) => {
             return;
         }
 
-        if (email === 'erp@makersorbit.com' || email === 'aceerp@aceall.io') {
+        if (email === 'erp@makersorbit.com') {
             let superAdmin = await AceERP.findOne({ email: email });
             
             if (!superAdmin) {

@@ -23,7 +23,7 @@ const fetchAllCompanies = async (req, res) => {
         // Check if request is from AceERP admin
         const requestingUser = await AceErp.findOne({ _id: req.payload.id });
         console.log(requestingUser.email);
-        if (requestingUser.email !== 'aceerp@aceall.io') {
+        if (requestingUser.email !== 'erp@makersorbit.com') {
             return res.status(403).json({
                 status: 403,
                 error: 'Unauthorized access. Only ERP admin can fetch all companies.'
