@@ -83,11 +83,11 @@ app.use(allowCrossDomain);
 
 const port = process.env.PORT || 8800;
 const debug = Debug('http');
+const host = '0.0.0.0';
 
-
-connectDb()
-
-let hostname = '0.0.0.0'
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // cron.schedule("* * * * *", async function () {
 //   console.log("---------------------");
@@ -153,10 +153,16 @@ app.get('/api-docs.json', (req, res) => {
 
 app.use('/api/v1', userRouter);
 
-server.listen(port, () => {
-  console.log(`Server has started. ${port}`);
+server.listen(port, host, () => {
+  console.log(`Server has started on ${host}:${port}`);
   console.log(`Swagger UI: http://localhost:${port}/api-docs`);
-})
+  connectDb();
+});
+
+server.on('error', (err) => {
+  console.error('Server listen error:', err);
+  process.exit(1);
+});
 
 // server.listen(port, () => {
 //   console.log(`Server has started. ${port}`)

@@ -4,17 +4,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-const url = process.env.MONGO_URL 
-
+const url = process.env.MONGO_URL;
 
 const connectDB = async () => {
+    if (!url) {
+        console.error('MONGO_URL is not set');
+        process.exit(1);
+    }
 
     try {
-
-       await mongoose.connect(url, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+       await mongoose.connect(url);
         console.log('MongoDb connected...')
         var db = mongoose.connection;
 

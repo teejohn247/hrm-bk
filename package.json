@@ -4,7 +4,7 @@
   "description": "SMS",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --exec babel-node app.js",
+    "start": "babel-node app.js",
     "dev": "nodemon --exec babel-node app.js",
     "create-hr-module": "node scripts/createHRModule.js",
     "add-hr-recruitment": "node scripts/addHRModuleFeature.js",
@@ -15,6 +15,9 @@
     "report": "nyc report --reporter=lcov",
     "test-coverage-report": "npm run coverage && npm run report && npm run coveralls",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "engines": {
+    "node": ">=20 <23"
   },
   "author": "tolu johnson",
   "license": "ISC",
