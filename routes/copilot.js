@@ -691,10 +691,10 @@ router.post('/generate-document', async (req, res) => {
         {
           role: 'system',
           content: `You are an HR document specialist for a Nigerian company.
-Generate professional, formally worded HR documents.
-Include all employee details provided.
-Format with clear sections and proper spacing.
-Use Nigerian Naira (₦) for all monetary references.`,
+          Generate professional, formally worded HR documents.
+          Include all employee details provided.
+          Format with clear sections and proper spacing.
+          Use Nigerian Naira (₦) for all monetary references.`,
         },
         { role: 'user', content: prompt },
       ],
