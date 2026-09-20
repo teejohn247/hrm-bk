@@ -4,8 +4,9 @@
   "description": "SMS",
   "main": "app.js",
   "scripts": {
+    "build": "rm -rf dist && babel . --out-dir dist --copy-files --ignore node_modules,dist,test,public,images,scripts,coverage,.nyc_output,.git",
     "start": "node bootstrap.js",
-    "dev": "nodemon --exec babel-node app.js",
+    "dev": "nodemon bootstrap.js",
     "create-hr-module": "node scripts/createHRModule.js",
     "add-hr-recruitment": "node scripts/addHRModuleFeature.js",
     "update-hr-permissions": "node scripts/updateHRModulePermissions.js",

@@ -1,110 +1,53 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import connectDb from './config/db'
+import connectDb from './config/db';
 import userRouter from './routes/adminRoute';
-import Debug from 'debug';
 import cors from 'cors';
 import http from 'http';
 import bodyParser from 'body-parser';
 import multer from 'multer';
 import DeviceDetector from 'node-device-detector';
-import middlewareDetect from './middleware/middlewareDetect'
-import { cloudinaryConfig } from './config/cloudinary';
+import middlewareDetect from './middleware/middlewareDetect';
 import { sendEmail } from './config/email';
 import { emailTemp } from './emailTemplate';
-import daysUsed from './cron/daysUsed';
 import createSubdomainForAmplifyApp from './config/sub-domain';
 import cron from 'node-cron';
 import { updateSubscriptionStatuses } from './utils/subscriptionStatusManager';
 import { swaggerSpec, swaggerUi } from './config/swagger.js';
 import copilotRouter from './routes/copilot';
 
+console.log('[boot] app.js imports finished');
 
-console.log('[boot] app.js module evaluating (imports finished)');
+export function mountApp(app, server) {
+  dotenv.config();
 
-const upload = multer()
-const app = express();
-dotenv.config();
+  const upload = multer();
 
-app.use(express.json());
-// app.use(upload.single());÷
+  app.use(express.json());
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({
+    limit: '50mb',
+    parameterLimit: 100000,
+    extended: true,
+  }));
 
-app.use(bodyParser.json({
-  limit: '50mb'
-}));
+  app.use(express.static('public'));
+  app.use(middlewareDetect);
+  app.use('/images', express.static('images'));
+  app.use(express.urlencoded({ extended: true }));
+  app.use(cors());
+  app.options('*', cors());
 
-app.use(bodyParser.urlencoded({
-  limit: '50mb',
-  parameterLimit: 100000,
-  extended: true 
-}))
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    next();
+  });
 
-const server = http.createServer(app);
-const { Server } = require("socket.io");
+  app.use('/api/copilot', copilotRouter);
 
-
-
-app.use(express.static('public'));
-
-
-
-// init deviceDetector
-const deviceDetector = new DeviceDetector({
-  clientIndexes: true,
-  deviceIndexes: true,
-  deviceAliasCode: false,
-});
-
-
-const hasBotResult = (result) => {
-  return result && result.name;
-}
-
-
-// attach middleware
-app.use(middlewareDetect);
-
-app.use(express.static('public')); 
-app.use('/images', express.static('images'));
-
-// app.use(express.static('public'));
-
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.options('*', cors());
-
-app.use('/api/copilot', copilotRouter);
- 
-const allowCrossDomain = (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', "*");
-  next();
-};
-app.use(allowCrossDomain);
-
-
-const port = process.env.PORT || 8800;
-const debug = Debug('http');
-const host = '0.0.0.0';
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-// cron.schedule("* * * * *", async function () {
-//   console.log("---------------------");
-//  const ans = await daysUsed()
-//  console.log(ans)
-//  console.log("running a task every 60 seconds");
-
-//  return ans;
-  
-
-// });
-
-app.get('/test', async (req, res) => {
-
-  let data = `<div>
+  app.get('/test', async (req, res) => {
+    const data = `<div>
             <p style="padding: 32px 0; text-align: left !important; font-weight: 700; font-size: 20px;font-family: 'DM Sans';">
             Hi 
             </p> 
@@ -116,67 +59,42 @@ app.get('/test', async (req, res) => {
             <br><br>
             </p>
             
-            <div>`
-    
-           let resp = emailTemp(data, 'Employee Invitation')
+            <div>`;
 
+    const resp = emailTemp(data, 'Employee Invitation');
+    const receivers = [{ email: 'teejohn247@gmail.com' }];
 
-           const receivers = [
-            {
-              email: 'teejohn247@gmail.com'
-            }
-          ]
-    
-            await sendEmail(req, res, 'teejohn247@gmail.com', receivers, 'Employee Invitation', resp);
-  res.json({
-    message: 'Welcome to greenpeg ERP Api'
+    await sendEmail(req, res, 'teejohn247@gmail.com', receivers, 'Employee Invitation', resp);
+    res.json({ message: 'Welcome to greenpeg ERP Api' });
   });
-});
 
-// Endpoint to create subdomain
-app.post('/create-subdomain', async (req, res) => {
-  try {
-    const result = await createSubdomainForAmplifyApp(req.body.subDomainName);
-    res.status(200).json({ message: 'Subdomain created successfully', result });
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating subdomain', error });
-  }
-});
+  app.post('/create-subdomain', async (req, res) => {
+    try {
+      const result = await createSubdomainForAmplifyApp(req.body.subDomainName);
+      res.status(200).json({ message: 'Subdomain created successfully', result });
+    } catch (error) {
+      res.status(500).json({ message: 'Error creating subdomain', error });
+    }
+  });
 
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'ACEALL ERP API Documentation'
-}));
-app.get('/api-docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ACEALL ERP API Documentation',
+  }));
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
 
-app.use('/api/v1', userRouter);
+  app.use('/api/v1', userRouter);
 
-server.listen(port, host, () => {
-  console.log(`Server has started on ${host}:${port}`);
-  console.log(`Swagger UI: http://localhost:${port}/api-docs`);
+  console.log('[boot] Express routes registered');
   connectDb();
-});
+}
 
-server.on('error', (err) => {
-  console.error('Server listen error:', err);
-  process.exit(1);
-});
-
-// server.listen(port, () => {
-//   console.log(`Server has started. ${port}`)
-//   if (swaggerUi && swaggerJsdoc) {
-//     console.log(`Swagger UI available at: http://localhost:${port}/api-docs`)
-//   } else {
-//     console.log(`To enable Swagger UI, run: npm install swagger-jsdoc --save`)
-//   }
-// })
-export default app;
-
-// Run every day at midnight
 cron.schedule('0 0 * * *', () => {
-    updateSubscriptionStatuses();
+  updateSubscriptionStatuses();
 });
+
+/** @deprecated tests only — use bootstrap + mountApp in production */
+export default express();
