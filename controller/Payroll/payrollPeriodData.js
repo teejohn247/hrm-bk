@@ -9,11 +9,9 @@
 // import Debits from '../../model/Debit';
 // import SalaryScale from '../../model/SalaryScale';
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // //Convert string to camel case
 // function toCamelCase(str){

@@ -11,13 +11,11 @@
 // import Employee from '../../model/Employees';
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
 
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 // const createPeriod = async (req, res) => {
@@ -177,13 +175,11 @@
 // import Employee from '../../model/Employees';
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
 
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 // const createPeriod = async (req, res) => {

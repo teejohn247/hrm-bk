@@ -9,10 +9,8 @@ import AppraisalGroup from '../../model/AppraisalGroup';
 import utils from '../../config/utils';
 import Employee from '../../model/Employees';
 
-const sgMail = require('@sendgrid/mail')
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const verifyEmployee = async (req, res) => {
 

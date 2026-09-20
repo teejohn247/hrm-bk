@@ -8,11 +8,9 @@ import ExpenseRequest from "../../model/ExpenseRequests";
 import { emailTemp } from '../../emailTemplate';
 import { sendEmail } from '../../config/email';
 import moment  from "moment";
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createExpenseRequest = async (req, res) => {
 

@@ -10,11 +10,9 @@ import Employees from '../../model/Employees';
 import Group from '../../model/AppraisalGroup';
 import AppraisalData from '../../model/AppraisalData';
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 /**
  * Delete a KPI and clean up all references to it in other collections

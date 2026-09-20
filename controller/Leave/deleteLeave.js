@@ -5,11 +5,9 @@ import Leave from "../../model/Leaves";
 import Employee from "../../model/Employees";
 import Designation from "../../model/Designation";
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const deleteLeave = async (req, res) => {
   try {

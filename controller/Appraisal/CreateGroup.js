@@ -7,11 +7,9 @@
 // import addDepartment from '../../model/Department';
 // import Employees from '../../model/Employees';
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // const createGroup = async (req, res) => {
 //     try {

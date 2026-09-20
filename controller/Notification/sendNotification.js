@@ -4,20 +4,12 @@ import Notifications from '../../model/NotificationLog';
 import utils from '../../config/utils';
 
 import { emailTemp } from '../../emailTemplate';
+import { sendEmail } from '../../config/email';
 import axios from 'axios';
 import { x } from 'joi';
 let request = require('request');
 
-
-const sgMail = require('@sendgrid/mail')
-
 dotenv.config();
-
-
-
-sgMail.setApiKey(process.env.SENDGRID_KEY);
-
-
 
 const sendNotication = async (req, res) => {
 
@@ -47,14 +39,6 @@ const sendNotication = async (req, res) => {
 
             let resp = emailTemp(msgs, 'Nigenius SMS Notification')
 
-            const msg = {
-                to: emails, // Change to your recipient
-                from: 'smsnebula@nigenius.ng',
-                send_at: date && date,
-                subject: 'Nigenius SMS Notification',
-                // text: 'This is a test email',
-                html: `${resp},`
-            }
             console.log(req.file)
 
             console.log(notificationTypeName,
@@ -86,9 +70,16 @@ const sendNotication = async (req, res) => {
 
 
 
-            await notifications.save().then(() => {
-
-                sgMail.sendMultiple(msg)
+            await notifications.save().then(async () => {
+                const receivers = emails.map((email) => ({ email }));
+                await sendEmail(
+                    req,
+                    res,
+                    emails[0],
+                    receivers,
+                    'Nigenius SMS Notification',
+                    resp
+                );
                 res.status(200).json({
                     status: 200,
                     success: true,

@@ -15,14 +15,12 @@ import { parseDate, formatDateDDMMYYYY } from '../../utils/dateUtils';
 
 const { differenceInDays, addDays, isSaturday, isSunday, isSameDay } = require('date-fns');
 // const { parse, format } = require('date-fns-tz');
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

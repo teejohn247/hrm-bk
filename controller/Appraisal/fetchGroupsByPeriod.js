@@ -6,11 +6,9 @@
 // import Company from '../../model/Company';
 // import Period from '../../model/AppraisalPeriod';
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // const fetchGroupsByPeriod = async (req, res) => {
 //     try {

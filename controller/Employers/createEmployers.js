@@ -19,7 +19,6 @@
 // import moment from 'moment/moment';
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
@@ -325,7 +324,6 @@
 //                                 })
 //                         }
 //                     })
-//                 // sgMail.send(msg)
 //             // console.log(adm)
 //             // return res.status(200).json({
 //             //     status: 200,

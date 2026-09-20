@@ -7,14 +7,12 @@ import { emailTemp } from '../../emailTemplate';
 import fetchLeavesDetails from '../../model/LeaveRecords';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

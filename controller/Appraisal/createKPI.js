@@ -8,11 +8,9 @@ import Employees from '../../model/Employees';
 import AppraisalData from '../../model/AppraisalData';
 import Department from '../../model/Department';
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 /**
  * Verification function to check if a KPI was properly assigned

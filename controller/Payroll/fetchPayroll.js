@@ -4,11 +4,9 @@ import Employee from '../../model/Employees';
 import Company from '../../model/Company';
 import mongoose from 'mongoose';
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const fetchPayroll = async (req, res) => {
     try {

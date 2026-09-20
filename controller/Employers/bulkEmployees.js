@@ -7,12 +7,10 @@ import { sendEmail } from '../../config/email';
 import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
 
-const sgMail = require('@sendgrid/mail');
 const csv = require('csvtojson');
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const bulkEmployee = async (req, res) => {
     try {

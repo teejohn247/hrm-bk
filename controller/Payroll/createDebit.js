@@ -7,14 +7,12 @@ import Debit from '../../model/Debit';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const createDebits = async (req, res) => {

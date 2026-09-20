@@ -8,11 +8,9 @@ import PayrollCredit from '../../model/Credits';
 import PayrollDebit from '../../model/Debit';
 import mongoose from 'mongoose';
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const createSalaryScale = async (req, res) => {

@@ -6,11 +6,9 @@ import bcrypt from 'bcrypt';
 import createSubdomainForAmplifyApp from '../../config/sub-domain';
 import Module from '../../model/Modules';
 
-const sgMail = require('@sendgrid/mail');
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createCompany = async (req, res) => {
     try {

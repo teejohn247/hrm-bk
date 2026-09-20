@@ -7,14 +7,12 @@ import Payroll from '../../model/Payroll';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const updatePayroll = async (req, res) => {

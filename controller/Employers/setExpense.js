@@ -10,14 +10,12 @@ import { emailTemp } from '../../emailTemplate';
 import Designation from "../../model/Designation";
 import Department from "../../model/Department";
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

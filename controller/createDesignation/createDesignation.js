@@ -9,11 +9,9 @@ import Leave from "../../model/Leaves";
 import Expense from "../../model/Expense";
 
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createDesignation = async (req, res) => {
   try {
@@ -216,10 +214,8 @@ export default createDesignation;
 // import Leave from "../../model/Leaves";
 // import Expense from "../../model/Expense";
 
-// const sgMail = require("@sendgrid/mail");
 
 // dotenv.config();
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // const createDesignation = async (req, res) => {
 //   try {

@@ -9,14 +9,12 @@ import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 
@@ -34,7 +32,6 @@ const addTable = async (req, res) => {
 
         await employee.save().then((adm) => {
 
-            // sgMail.send(msg)
             console.log(adm)
             res.status(200).json({
                 status: 200,

@@ -9,11 +9,9 @@ import Company from '../../model/Company';
 import path from 'path';
 import { selectFields } from 'express-validator/src/select-fields';
 
-const sgMail = require('@sendgrid/mail')
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 dotenv.config();
