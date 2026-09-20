@@ -8,7 +8,7 @@ const fallbackUrl = process.env.MONGO_URL_FALLBACK;
 
 function parseDbName(connectionUrl) {
     const afterHosts = connectionUrl.match(/:27017\/([^/?]+)/);
-    if afterHosts?.[1]) return afterHosts[1];
+    if (afterHosts?.[1]) return afterHosts[1];
     const srvPath = connectionUrl.match(/\.net\/([^/?]+)/);
     if (srvPath?.[1]) return srvPath[1];
     return '';
