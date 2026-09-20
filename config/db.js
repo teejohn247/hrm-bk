@@ -15,7 +15,8 @@ const connectDB = async () => {
     try {
         console.log('[mongo] Connecting to Atlas...');
         await mongoose.connect(url, {
-            serverSelectionTimeoutMS: 15000,
+            serverSelectionTimeoutMS: 8000,
+            family: 4,
         });
         console.log('MongoDb connected...');
         var db = mongoose.connection;
