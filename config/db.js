@@ -13,14 +13,17 @@ const connectDB = async () => {
     }
 
     try {
-       await mongoose.connect(url);
-        console.log('MongoDb connected...')
+        console.log('[mongo] Connecting to Atlas...');
+        await mongoose.connect(url, {
+            serverSelectionTimeoutMS: 15000,
+        });
+        console.log('MongoDb connected...');
         var db = mongoose.connection;
 
         db.on("error", () => console.log("error connecting to database"));
         db.once("open", () => console.log("Connected to database"));
     } catch (err) {
-        console.error(err.message);
+        console.error('[mongo] Connection failed:', err.message);
         process.exit(1);
     }
 }

@@ -20,6 +20,8 @@ import { swaggerSpec, swaggerUi } from './config/swagger.js';
 import copilotRouter from './routes/copilot';
 
 
+console.log('[boot] app.js module evaluating (imports finished)');
+
 const upload = multer()
 const app = express();
 dotenv.config();

@@ -4,7 +4,7 @@
   "description": "SMS",
   "main": "app.js",
   "scripts": {
-    "start": "babel-node app.js",
+    "start": "node bootstrap.js",
     "dev": "nodemon --exec babel-node app.js",
     "create-hr-module": "node scripts/createHRModule.js",
     "add-hr-recruitment": "node scripts/addHRModuleFeature.js",
