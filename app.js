@@ -10,6 +10,7 @@ import DeviceDetector from 'node-device-detector';
 import middlewareDetect from './middleware/middlewareDetect';
 import { sendEmail } from './config/email';
 import { emailTemp } from './emailTemplate';
+import { frontendPath } from './config/frontendUrl';
 import createSubdomainForAmplifyApp from './config/sub-domain';
 import cron from 'node-cron';
 import { updateSubscriptionStatuses } from './utils/subscriptionStatusManager';
@@ -54,7 +55,7 @@ export function mountApp(app, server) {
     
             <p style="font-size: 16px; text-align: left !important; font-weight: 300;">
     
-            You have been invited to join <a href="https://makers-hrm-1086159474664.europe-west1.run.app/set-password">Makers ERP Platform</a> as an employee 
+            You have been invited to join <a href="${frontendPath('/set-password')}">Makers ERP Platform</a> as an employee 
     
             <br><br>
             </p>

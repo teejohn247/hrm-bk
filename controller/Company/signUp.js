@@ -5,7 +5,8 @@ import bcrypt from 'bcrypt';
 
 import utils from '../../config/utils';
 import { sendEmail } from '../../config/email';
-import {emailTemp} from '../../emailTemplate';
+import { emailTemp } from '../../emailTemplate';
+import { signUpRegistrationUrl } from '../../config/frontendUrl';
 
 
 dotenv.config();
@@ -52,7 +53,7 @@ const signUp = async (req, res) => {
 
         <p style="font-size: 16px; text-align:left !important; font-weight: 300;">
 
-        Click on this link to complete your registration process <a href="https://makers-hrm-1086159474664.europe-west1.run.app/app/${token}">Makers ERP Platform</a> as an employee 
+        Click on this link to complete your registration process <a href="${signUpRegistrationUrl(token)}">Makers ERP Platform</a> as an employee 
 
         <br><br>
         </p>

@@ -6,6 +6,7 @@ import Designation from '../../model/Designation';
 import { sendEmail } from '../../config/email';
 import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
+import { setPasswordUrl } from '../../config/frontendUrl';
 
 const csv = require('csvtojson');
 
@@ -162,7 +163,7 @@ const bulkEmployee = async (req, res) => {
                         </p> 
 
                         <p style="font-size: 16px; text-align:left !important; font-weight: 300;">
-                        You have been invited to join <a href="https://makers-hrm-1086159474664.europe-west1.run.app/set-password/${token}">Makers ERP Platform</a> as an employee 
+                        You have been invited to join <a href="${setPasswordUrl(token)}">Makers ERP Platform</a> as an employee 
                         <br><br>
                         </p>
                     <div>`;
