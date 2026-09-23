@@ -3,14 +3,12 @@ import dotenv from 'dotenv';
 import Role from '../../model/Role';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

@@ -8,14 +8,12 @@ import AppraisalGroup from '../../model/Rating';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const createRating = async (req, res) => {

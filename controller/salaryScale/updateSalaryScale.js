@@ -8,11 +8,9 @@ import SalaryScale from "../../model/SalaryScale";
 import PayrollCredit from '../../model/Credits';
 import PayrollDebit from '../../model/Debit';
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const updateSalaryScale = async (req, res) => {
   try {

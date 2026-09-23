@@ -3,9 +3,10 @@ node_modules
 coverage
 .nyc_output
 build
+dist
 report.20190616.195300.3168.001
 .vscode
-yarn.lock
 .DS_Store
 .env.test
 .ebextensions
+config/makers-erp-gcs-key.json

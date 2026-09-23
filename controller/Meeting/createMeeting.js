@@ -8,14 +8,12 @@
 
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
 
 
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 
@@ -223,6 +221,7 @@
 // export default createMeeting;
 
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { google } from 'googleapis';
 import Meeting from '../../model/Meetings';
 import Company from '../../model/Company';
@@ -393,10 +392,19 @@ const createMeeting = async (req, res) => {
         const guestDetails = [];
         const guestEmails = [];
 
+        // Match companyId as string or ObjectId — employees may store it either way
+        let companyIdQuery = { companyId };
+        try {
+            const oid = new mongoose.Types.ObjectId(companyId);
+            companyIdQuery = { $or: [{ companyId }, { companyId: oid }] };
+        } catch (_) {}
+
+        
+        console.log({companyIdQuery})
         for (const guestEmail of invitedGuests) {
             const guest = await Employee.findOne({ 
                 email: guestEmail,
-                companyId: companyId 
+                ...companyIdQuery 
             });
 
             if (guest) {
@@ -463,10 +471,23 @@ const createMeeting = async (req, res) => {
 
         const savedMeeting = await meeting.save();
 
+        const options = { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          };
+          const timeOptions = { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          };
+          
+          console.log(`You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString('en-GB', options)} at ${startDate.toLocaleTimeString('en-US', timeOptions)}`)
+
         // Send notifications to all invited guests
         const notifications = guestDetails.map(guest => ({
             notificationType: 'Meeting Invitation',
-            notificationContent: `You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString()}`,
+            notificationContent: `You have been invited to a meeting: ${title || 'Team Meeting'} on ${startDate.toLocaleDateString('en-GB', options)} at ${startDate.toLocaleTimeString()}`,
             recipientId: guest.employeeId,
             companyName,
             companyId: companyId.toString(),
@@ -526,4 +547,5 @@ const createMeeting = async (req, res) => {
     }
 };
 
+export { createGoogleCalendarEvent };
 export default createMeeting;

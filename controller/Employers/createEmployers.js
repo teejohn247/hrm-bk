@@ -19,7 +19,6 @@
 // import moment from 'moment/moment';
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
@@ -325,7 +324,6 @@
 //                                 })
 //                         }
 //                     })
-//                 // sgMail.send(msg)
 //             // console.log(adm)
 //             // return res.status(200).json({
 //             //     status: 200,
@@ -370,6 +368,7 @@ import AuditTrail from '../../model/AuditTrail';
 import { sendEmail } from '../../config/email';
 import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
+import { setPasswordUrl } from '../../config/frontendUrl';
 import moment from 'moment/moment';
 
 dotenv.config();
@@ -406,6 +405,14 @@ const inviteEmployee = async (req, res) => {
 
         // Input validation
         if (!firstName || !lastName || !email || !departmentId || !designationId) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                error: 'Required field: Employee Start Date'
+            });
+        }
+
+        if (!employmentStartDate) {
             return res.status(400).json({
                 status: 400,
                 success: false,
@@ -527,7 +534,7 @@ const inviteEmployee = async (req, res) => {
             departmentId,
             department: department.departmentName,
             employmentType,
-            employmentStartDate,
+            employmentStartDate: employmentStartDate ? employmentStartDate : new Date().toISOString(),        
             managerId: department.managerId || '',
             managerName: department.managerName || '',
             email,
@@ -559,7 +566,7 @@ const inviteEmployee = async (req, res) => {
                 Hi ${firstName},
             </p> 
             <p style="font-size: 16px; text-align: left !important; font-weight: 300;">
-                You have been invited to join <a href="https://makers-hrm-1086159474664.europe-west1.run.app/set-password/${token}">Makers ERP Platform</a> as an employee.
+                You have been invited to join <a href="${setPasswordUrl(token)}">Makers ERP Platform</a> as an employee.
                 <br><br>
             </p>
         </div>`;

@@ -6,11 +6,9 @@
 // import Company from '../../model/Company';
 // import Period from '../../model/AppraisalPeriod';
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // const fetchGroupsByPeriod = async (req, res) => {
 //     try {
@@ -744,6 +742,7 @@ const fetchGroupsByPeriod = async (req, res) => {
             endDate: appraisalPeriod.endDate,
             activeDate: appraisalPeriod.activeDate,
             inactiveDate: appraisalPeriod.inactiveDate,
+            employeeKpiId: appraisalData?.employeeKpiId,
             status: employeeKpiSubmission?.status || appraisalData?.status || 'Pending',
             employeeSubmissionDate: employeeKpiSubmission?.employeeSignedDate || appraisalData?.employeeSubmissionDate,
             employeeSignStatus: employeeKpiSubmission?.employeeSignStatus || false,

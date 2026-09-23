@@ -9,11 +9,9 @@ import Leave from "../../model/Leaves";
 import Expense from "../../model/Expense";
 
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createDesignation = async (req, res) => {
   try {
@@ -207,3 +205,145 @@ const createDesignation = async (req, res) => {
   }
 };
 export default createDesignation;
+
+
+// import dotenv from "dotenv";
+// import Role from "../../model/Role";
+// import Company from "../../model/Company";
+// import Designation from "../../model/Designation";
+// import Leave from "../../model/Leaves";
+// import Expense from "../../model/Expense";
+
+
+// dotenv.config();
+
+// const createDesignation = async (req, res) => {
+//   try {
+//     const { designationName, description, leaveAssignment, grade, expenseCard } = req.body;
+
+//     // Fetch company
+//     const company = await Company.findById(req.payload.id);
+    
+//     if (!company?.companyName) {
+//       return res.status(400).json({
+//         status: 400,
+//         error: "No company has been created for this account",
+//       });
+//     }
+
+//     // Check for duplicate designation
+//     const existingDesignation = await Designation.findOne({
+//       companyId: company._id,
+//       designationName,
+//     });
+
+//     if (existingDesignation) {
+//       return res.status(400).json({
+//         status: 400,
+//         error: "This designation name already exists",
+//       });
+//     }
+
+//     // Base designation data
+//     const designationData = {
+//       designationName,
+//       companyId: req.payload.id,
+//       companyName: company.companyName,
+//       description,
+//       grade,
+//     };
+
+//     // Handle case with no leave assignment
+//     if (!leaveAssignment || leaveAssignment.length === 0) {
+//       const designation = new Designation(designationData);
+//       const savedDesignation = await designation.save();
+      
+//       return res.status(200).json({
+//         status: 200,
+//         success: true,
+//         data: savedDesignation,
+//       });
+//     }
+
+//     // Process leave assignments
+//     const leaveIds = leaveAssignment.map(item => item.leaveTypeId).filter(Boolean);
+    
+//     if (leaveIds.length !== leaveAssignment.length) {
+//       return res.status(400).json({
+//         status: 400,
+//         error: "Leave id field is compulsory for all leave assignments",
+//       });
+//     }
+
+//     // Fetch all leaves in parallel
+//     const leaves = await Leave.find({ _id: { $in: leaveIds } });
+    
+//     if (leaves.length !== leaveIds.length) {
+//       return res.status(400).json({
+//         status: 400,
+//         error: "No Leave Type Found, Please create a leave type to continue",
+//       });
+//     }
+
+//     // Map leaves to leave types
+//     const leaveMap = new Map(leaves.map(leave => [leave._id.toString(), leave]));
+//     const leaveTypes = leaveAssignment.map(assignment => {
+//       const leave = leaveMap.get(assignment.leaveTypeId);
+//       return {
+//         leaveTypeId: assignment.leaveTypeId,
+//         leaveName: leave.leaveName,
+//         noOfLeaveDays: Number(assignment.noOfLeaveDays),
+//         description: leave.description,
+//       };
+//     });
+
+//     // Process expense cards if provided
+//     let processedExpenseCards = [];
+//     if (expenseCard && expenseCard.length > 0) {
+//       const expenseIds = expenseCard.map(item => item.expenseTypeId).filter(Boolean);
+      
+//       if (expenseIds.length !== expenseCard.length) {
+//         return res.status(400).json({
+//           status: 400,
+//           error: "No Expense Type Found, Please create an expense type to continue",
+//         });
+//       }
+
+//       // Fetch all expenses in parallel (if needed for validation)
+//       // const expenses = await Expense.find({ _id: { $in: expenseIds } });
+
+//       processedExpenseCards = expenseCard.map(card => ({
+//         expenseCardName: card.expenseCardName || "",
+//         cardCurrency: card.cardCurrency,
+//         cardBalance: card.cardLimit,
+//         cardExpiryDate: card.cardExpiryDate,
+//         cardLimit: card.cardLimit,
+//       }));
+//     }
+
+//     // Create designation with all data
+//     const designation = new Designation({
+//       ...designationData,
+//       leaveTypes,
+//       expenseCard: processedExpenseCards,
+//     });
+
+//     const savedDesignation = await designation.save();
+
+//     return res.status(200).json({
+//       status: 200,
+//       success: true,
+//       data: savedDesignation,
+//     });
+
+//   } catch (error) {
+//     console.error("Error creating designation:", error);
+//     return res.status(500).json({
+//       status: 500,
+//       success: false,
+//       error: error.message || "Internal server error",
+//     });
+//   }
+// };
+
+// export default createDesignation;

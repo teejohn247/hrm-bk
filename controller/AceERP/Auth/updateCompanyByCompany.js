@@ -14,18 +14,12 @@ const updateCompanyByCompany = async (req, res) => {
 
         const {
             companyName,
-            // email,
             companyAddress,
             companyLogo,
-            // generalSettings,
-            // activeStatus,
-            // status,
-            // parollPeriodFrequency,
             industry,
-            // systemRoles,
+            currency,
             singleSignOn,
             subDomain,
-            // companyFeatures
         } = req.body;
 
         // Find company by ID
@@ -52,6 +46,7 @@ const updateCompanyByCompany = async (req, res) => {
         // if (typeof status !== 'undefined') companyFields.status = status;
         // if (parollPeriodFrequency) companyFields.parollPeriodFrequency = parollPeriodFrequency;
         if (industry) companyFields.industry = industry;
+        if (currency !== undefined) companyFields.currency = currency;
         if (subDomain) companyFields.subDomain = subDomain;
 
         // if (systemRoles) {

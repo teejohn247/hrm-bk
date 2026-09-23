@@ -10,14 +10,12 @@ import AppraisalGroup from '../../model/FinalRating';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

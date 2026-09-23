@@ -7,14 +7,12 @@ import AceErp from '../../../model/AceErps';
 import bcrypt from 'bcrypt';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 
@@ -22,10 +20,11 @@ const fetchAllCompanies = async (req, res) => {
     try {
         // Check if request is from AceERP admin
         const requestingUser = await AceErp.findOne({ _id: req.payload.id });
+        console.log(requestingUser.email);
         if (requestingUser.email !== 'erp@makersorbit.com') {
             return res.status(403).json({
                 status: 403,
-                error: 'Unauthorized access. Only AceERP admin can fetch all companies.'
+                error: 'Unauthorized access. Only ERP admin can fetch all companies.'
             });
         }
 

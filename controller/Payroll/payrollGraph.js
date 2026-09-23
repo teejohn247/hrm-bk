@@ -14,14 +14,12 @@
 
 
 
-// const sgMail = require('@sendgrid/mail')
 
 // dotenv.config();
 
 
 
 
-// sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 // const payrollGraph = async (req, res) => {
@@ -229,8 +227,6 @@ import mongoose from 'mongoose';
 
 dotenv.config();
 
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const payrollGraph = async (req, res) => {
   try {

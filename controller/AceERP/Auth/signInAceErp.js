@@ -4,11 +4,9 @@ import Admin from '../../../model/AceErps';
 import utils from '../../../config/utils';
 import { selectFields } from 'express-validator/src/select-fields';
 
-const sgMail = require('@sendgrid/mail')
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 dotenv.config();

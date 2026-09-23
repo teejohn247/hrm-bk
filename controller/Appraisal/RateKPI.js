@@ -307,6 +307,8 @@ const rateKPI = async (req, res) => {
             });
         }
 
+        console.log({manager});
+
         // Check if manager has permission to rate
         if (!manager.isManager && !manager.isSuperAdmin) {
             return res.status(403).json({
@@ -315,6 +317,7 @@ const rateKPI = async (req, res) => {
                 error: 'You do not have permission to rate employee KPIs'
             });
         }
+
 
         // Get the employee KPI submission
         const employeeKpi = await EmployeeKpi.findOne({ _id: employeeKpiId });
@@ -327,8 +330,12 @@ const rateKPI = async (req, res) => {
             });
         }
 
+        const employee = await Employee.findOne({ _id: employeeKpi.employeeId });
+
+        console.log({employee});
+
         // Verify manager is authorized to rate this employee
-        if (employeeKpi.managerId !== managerId.toString() && !manager.isSuperAdmin) {
+        if (employee.managerId !== managerId.toString() && !manager.isSuperAdmin) {
             return res.status(403).json({
                 status: 403,
                 success: false,

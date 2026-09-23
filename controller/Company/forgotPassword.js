@@ -6,6 +6,7 @@ import HTTP_STATUS from 'http-status-codes';
 import {emailTemp} from '../../emailTemplate';
 import utils from '../../config/utils';
 import { sendEmail } from '../../config/email';
+import { setPasswordUrl } from '../../config/frontendUrl';
 import Employees from '../../model/Employees';
 
 
@@ -36,7 +37,7 @@ const forgotPassword = async (req, res) => {
 		  
 				  Please, complete your reset your password using this link
 				  <br>
-						  <a href="https://makers-hrm-1086159474664.europe-west1.run.app/set-password/${token}"><button>Reset Password</button></a>
+						  <a href="${setPasswordUrl(token)}"><button>Reset Password</button></a>
 				  <br><br>
 				  </p>
 				  <div>`;
@@ -77,7 +78,7 @@ const forgotPassword = async (req, res) => {
 		  
 				  Please, complete your reset your password using this link
 				  <br>
-						  <a href="https://makers-hrm-1086159474664.europe-west1.run.app/set-password/${token}"><button>Reset Password</button></a>
+						  <a href="${setPasswordUrl(token)}"><button>Reset Password</button></a>
 				  <br><br>
 				  </p>
 				  <div>`;

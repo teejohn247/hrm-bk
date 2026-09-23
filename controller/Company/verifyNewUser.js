@@ -7,14 +7,12 @@ import jwt_decode from 'jwt-decode';
 
 import utils from '../../config/utils';
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

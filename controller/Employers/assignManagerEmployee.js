@@ -9,11 +9,9 @@ import mongoose from 'mongoose';
 import Department from "../../model/Department";
 import Designation from "../../model/Designation";
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 /**
  * Checks if an employee is a manager of any department or any employees

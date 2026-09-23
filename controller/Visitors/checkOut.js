@@ -8,14 +8,12 @@ import Visitor from '../../model/Visitor';
 import Employee from '../../model/Employees';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const checkOut = async (req, res) => {
@@ -51,7 +49,7 @@ const checkOut = async (req, res) => {
         Visitor.findOneAndUpdate({ _id: req.params.id}, { 
             $set: { 
                 checkOut: checkOutTime && checkOutTime,
-                status: "Inactive"
+                status: "checkedOut"
             }
        },
             function (

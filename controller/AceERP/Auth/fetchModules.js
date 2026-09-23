@@ -1,5 +1,24 @@
 import Modules from '../../../model/Modules';
 
+/**
+ * Ensure permissionType is present in featurePermissions (default 'view' if missing)
+ */
+function ensurePermissionType(modules) {
+    return (modules || []).map(m => ({
+        ...m.toObject ? m.toObject() : m,
+        moduleFeatures: (m.moduleFeatures || []).map(f => ({
+            ...(f.toObject ? f.toObject() : f),
+            featurePermissions: (f.featurePermissions || []).map(p => {
+                const perm = p.toObject ? p.toObject() : p;
+                return {
+                    ...perm,
+                    permissionType: perm.permissionType || 'view'
+                };
+            })
+        }))
+    }));
+}
+
 const fetchModules = async (req, res) => {
     try {
         const moduleDoc = await Modules.findOne();
@@ -10,9 +29,11 @@ const fetchModules = async (req, res) => {
             });
         }
 
+        const modules = ensurePermissionType(moduleDoc.modules);
+
         res.status(200).json({
             status: 200,
-            data: moduleDoc.modules
+            data: modules
         });
 
     } catch (error) {

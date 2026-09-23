@@ -9,14 +9,12 @@ import Meeting from '../../model/Meetings';
 import { emailTemp } from '../../emailTemplate';
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

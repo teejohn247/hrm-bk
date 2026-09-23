@@ -16,7 +16,6 @@ import Notification from '../../model/Notification';
 import { parseDate, formatDateDDMMYYYY } from '../../utils/dateUtils';
 const { differenceInDays, addDays, isSaturday, isSunday, isSameDay } = require('date-fns');
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
@@ -29,7 +28,6 @@ dotenv.config();
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
      

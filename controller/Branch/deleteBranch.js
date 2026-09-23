@@ -24,11 +24,11 @@ const deleteBranch = async (req, res) => {
         }
 
         // Soft delete by setting isActive to false
-        branch.isActive = false;
-        await branch.save();
+        // branch.isActive = false;
+        // await branch.save();
 
         // Or hard delete if preferred
-        // await Branch.deleteOne({ _id: id });
+        await Branch.deleteOne({ _id: id });
 
         res.status(200).json({
             status: 200,

@@ -6,14 +6,12 @@ import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
 import uploadFiles from '../../middleware/uploadGC';
 import exportFile from '../../middleware/export';
-import sgMail from '@sendgrid/mail';
 import xlsx from 'xlsx';
 import fs from 'fs';
 import path from 'path';
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 // Function to generate XLSX file from JSON
 function generateXLSX(jsonData) {

@@ -6,15 +6,13 @@ import Company from '../../model/Company';
 import utils from '../../config/utils';
 import { emailTemp } from '../../emailTemplate';
 
-const sgMail = require('@sendgrid/mail');
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const updateLeave = async (req, res) => {
     try {
-        const { leaveName, description } = req.body;
+        const { leaveName, description, colorCode } = req.body;
 
         // Use lean() to get plain JavaScript objects instead of Mongoose documents
         const check = await Employee.findOne({ _id: req.params.id }).lean();
@@ -30,6 +28,7 @@ const updateLeave = async (req, res) => {
         const updateFields = {};
         if (leaveName) updateFields.leaveName = leaveName;
         if (description) updateFields.description = description;
+        if (colorCode !== undefined) updateFields.colorCode = colorCode;
 
         // Use async/await instead of callback, and use lean()
         const result = await Employee.findOneAndUpdate(

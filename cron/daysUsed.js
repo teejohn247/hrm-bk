@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import LeaveRecords from '../model/LeaveRecords';
 import Employees from '../model/Employees';
 
-const sgMail = require('@sendgrid/mail')
 const { differenceInDays, addDays, isSaturday, isSunday, isSameDay } = require('date-fns');
 
 dotenv.config();
@@ -12,7 +11,6 @@ dotenv.config();
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

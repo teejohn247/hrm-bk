@@ -5,15 +5,13 @@ import Leave from "../../model/Leaves";
 import Employee from "../../model/Employees";
 import Designation from "../../model/Designation";
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createLeave = async (req, res) => {
   try {
-    const { leaveName, description } = req.body;
+    const { leaveName, description, colorCode } = req.body;
 
     let company = await Company.findOne({ _id: req.payload.id });
 
@@ -53,6 +51,7 @@ const createLeave = async (req, res) => {
       companyId: req.payload.id,
       companyName: company.companyName,
       description,
+      colorCode: colorCode || '',
     });
 
     var leaveTypes = [];

@@ -17,7 +17,7 @@ const VisitorSchema = new mongoose.Schema({
     visitDate:{ type: Date },
     phoneNumber: { type: String },
     email: { type: String },
-    status: {type: String, default: "Expected"}
+    status: {type: String, default: "pending"}
 }, { timestamps: true });
 
 

@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
 import Employee from '../../model/Holidays';
 
-const sgMail = require('@sendgrid/mail');
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const updateHoliday = async (req, res) => {
     try {

@@ -5,14 +5,12 @@ import Company from '../../model/Company';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 
@@ -50,7 +48,6 @@ const createRole = async (req, res) => {
 
         await role.save().then((adm) => {
 
-            // sgMail.send(msg)
             console.log(adm)
             res.status(200).json({
                 status: 200,

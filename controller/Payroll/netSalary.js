@@ -14,14 +14,12 @@ import mongoose from 'mongoose';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 const netSalary= async (req, res) => {

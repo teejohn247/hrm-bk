@@ -12,14 +12,12 @@ import AppraisalGroup from '../../model/AppraisalGroup';
 
 
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const createFinal = async (req, res) => {
 

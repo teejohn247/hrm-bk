@@ -11,14 +11,12 @@ import Department from "../../model/Department";
 import PayrollPeriod from '../../model/PayrollPeriod';
 import PeriodPayData from '../../model/PeriodPayData'
 
-const sgMail = require('@sendgrid/mail')
 
 dotenv.config();
 
 
 
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 
 

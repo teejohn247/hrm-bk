@@ -215,6 +215,10 @@ import role from '../controller/AceERP/Auth/roles';
 import fetchAdminRoles from '../controller/AceERP/Auth/fetchRoles';
 import toggleModule from '../controller/AceERP/Auth/toggleModule';
 import fetchModules from '../controller/AceERP/Auth/fetchModules';
+import createModule from '../controller/AceERP/Auth/createModule';
+import updateModule from '../controller/AceERP/Auth/updateModule';
+import deleteModule from '../controller/AceERP/Auth/deleteModule';
+import fetchModuleById from '../controller/AceERP/Auth/fetchModuleById';
 import getOrders from '../controller/order/getOrders';
 import getOrder from '../controller/order/getOrder';
 import updateOrder from '../controller/order/updateOrder';
@@ -247,9 +251,18 @@ import exportCustomersToExcel from '../controller/Customer/exportCustomer';
 import pullIndustries from '../controller/Industries/createIndustries';
 import getIndustries from '../controller/Industries/getIndustries';
 
+
+import createDocumentType from '../controller/Documents/createDocumentType';
+import fetchDocumentType from '../controller/Documents/fetchDocumentType';
+import updateDocumentType from '../controller/Documents/updateDocumentType';
+import deleteDocumentType from '../controller/Documents/deleteDocumentType';
+
 import utils from '../config/utils';
 
 import Employee from '../model/Employees';
+
+import approvePayrollPeriod from '../controller/Payroll/approvePayroll.js';
+import disbursePayrollPeriod from '../controller/Payroll/disbursePayroll.js';
 
 import updateProduct from '../controller/Product/updateProduct';
 import createStock from '../controller/Stock/createStock';
@@ -332,6 +345,9 @@ import readNotification from '../controller/Notification/readNotification';
 // import fetchNotificationByEmployeeId from '../controller/Notification/fetchNotificationByEmployeeId';
 // import fetchNotificationByCompanyId from '../controller/Notification/fetchNotificationByCompanyId';
 // import fetchNotificationByAdminId from '../controller/Notification/fetchNotificationByAdminId';
+
+
+
 
 const { userValidationRules, validate } = require('../middleware/signUpValidation')
 const multer = require("multer");
@@ -467,6 +483,8 @@ router.post("/upload-cv", upload.single("payroll"), (req, res) => {
 // import passport from 'passport';
 // import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import updateCompanyByCompany from '../controller/AceERP/Auth/updateCompanyByCompany';
+import updateCompanyLogo from '../controller/AceERP/Auth/updateCompanyLogo';
+import updateCompanyCurrency from '../controller/AceERP/Auth/updateCompanyCurrency';
 import assignSalaryScale from '../controller/salaryScale/assignSalaryScale';
 import deleteRolePermissions from '../controller/AceERP/Auth/deleteRolePermission';
 import syncCompanyFeaturesToRoles from '../controller/AceERP/Auth/syncCompanyFeaturesToRoles';
@@ -489,6 +507,11 @@ import getAllQuizzes from '../controller/Quiz/getAllQuizzes.js';
 import fixCourseQuizRelationships from '../controller/Quiz/fixCourseQuizRelationships.js';
 import updateAppraisalPeriod from '../controller/Appraisal/updateAppraisalPeriod.js';
 import importFreights from '../controller/Courier/importCourier.js';
+import uploadDocument from '../controller/Documents/UploadDocument.js';
+import uploadDocumentToGCS from '../middleware/uploadDocumentToGCS.js';
+import getDocuments from '../controller/Documents/fetchDocuments.js';
+import deleteDocument from '../controller/Documents/deleteDocument.js';
+
 
 // Add passport configuration
 // passport.serializeUser((user, done) => {
@@ -693,7 +716,7 @@ router.post("/createDebits", auth, createDebits);
 router.post("/createPayrollPeriod", auth, createPayrollPeriod);
 router.get("/fetchCredits", auth, fetchCredits);
 router.get("/fetchDebits", auth, fetchDebits);
-// router.get("/fetchPayrollPeriods", auth, fetchPayrollPeriod);
+router.get("/fetchPayrollPeriods", auth, fetchPayrollPeriod);
 router.patch("/updateCredits/:id", auth, updateCredits);
 router.patch("/updateDebits/:id", auth, updateDebits);
 router.patch("/updatePayrollPeriod/:id", auth, updatePayrollPeriod);
@@ -794,6 +817,10 @@ router.delete('/delete-order/:id', auth, deleteOrder)
 router.patch('/editCompany/:id', auth, editCompany);
 router.post('/createPermission', auth, addPermission);
 router.get('/fetchModules', auth, fetchModules);
+router.get('/modules/:id', auth, fetchModuleById);
+router.post('/modules', auth, createModule);
+router.patch('/modules/:id', auth, updateModule);
+router.delete('/modules/:id', auth, deleteModule);
 // router.get('/fetchModule/:id', auth, moduleController.fetchModule);
 router.post('/createRole', auth, role);
 router.get('/roles', auth, fetchAdminRoles);
@@ -830,6 +857,8 @@ router.post('/createMediaFeed', auth, upload.single("image"), imageUploader, cre
 router.get('/leaveGraphDetails', auth, leaveRecordsDetails);
 
 router.patch('/updateCompany/:id', auth, updateCompanyByCompany);
+router.patch('/company/:id/logo', auth, upload.single('companyLogo'), imageUploader, updateCompanyLogo);
+router.patch('/company/:id/currency', auth, updateCompanyCurrency);
 router.patch('/assignSalaryScale', auth, assignSalaryScale);
 router.delete('/deleteRolePermissions/:companyId', auth, deleteRolePermissions);
 
@@ -867,6 +896,9 @@ router.get('/fetchLeaveByEmployeeId', auth, fetchLeaveByEmployeeId);
 //     .get(auth, checkInFormController.getForm)  
 //     .put(auth, checkInFormController.updateForm)
 //     .delete(auth, checkInFormController.deleteForm);
+
+
+
 
 // Add route handlers for user complaints
 router.post('/complaints', auth, createComplaint);
@@ -906,7 +938,7 @@ router.delete('/support-tickets/:id', auth, deleteTicket);
 
 // Notification routes
 router.get('/notifications', auth, fetchNotifications);
-router.patch('/markAsRead/:id', auth, readNotification);
+router.patch('/notifications/markAsRead/:id', auth, readNotification);
 // router.get('/notifications/:id', auth, fetchNotificationById);
 // router.patch('/notifications/:id', auth, updateNotification);
 // router.delete('/notifications/:id', auth, deleteNotification);
@@ -914,5 +946,19 @@ router.patch('/markAsRead/:id', auth, readNotification);
 // router.get('/notifications/company/:companyId', auth, fetchNotificationByCompanyId);
 // router.get('/notifications/admin/:adminId', auth, fetchNotificationByAdminId);
 
+// Document type routes
+router.post('/createDocumentType', auth, createDocumentType);
+router.get('/fetchDocumentType', auth, fetchDocumentType);
+router.patch('/updateDocumentType/:id', auth, updateDocumentType);
+router.delete('/deleteDocumentType/:id', auth, deleteDocumentType);
+
+// Payroll routes
+router.patch('/approvePayroll/:id', auth, approvePayrollPeriod);
+router.patch('/disbursePayroll/:id', auth, disbursePayrollPeriod);
+
+// Document routes
+router.post('/uploadDocument', auth, upload.single("file"), uploadDocumentToGCS, uploadDocument);
+router.get('/fetchDocuments/:employeeId', auth, getDocuments);
+router.delete('/deleteDocument/:id', auth, deleteDocument);
 
 export default router;

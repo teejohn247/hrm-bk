@@ -7,11 +7,9 @@ import Expense from "../../model/Expense";
 import Employee from "../../model/Employees";
 
 
-const sgMail = require("@sendgrid/mail");
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_KEY);
 
 const assignSalaryScale = async (req, res) => {
   try {
