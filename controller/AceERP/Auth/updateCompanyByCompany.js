@@ -18,6 +18,11 @@ const updateCompanyByCompany = async (req, res) => {
             companyLogo,
             industry,
             currency,
+            country,
+            state,
+            city,
+            language,
+            companySize,
             singleSignOn,
             subDomain,
         } = req.body;
@@ -39,8 +44,13 @@ const updateCompanyByCompany = async (req, res) => {
         }
         if (companyName) companyFields.companyName = companyName;
         // if (email) companyFields.email = email;
-        if (companyAddress) companyFields.companyAddress = companyAddress;
+        if (companyAddress !== undefined) companyFields.companyAddress = companyAddress;
         if (companyLogo) companyFields.companyLogo = companyLogo;
+        if (country !== undefined) companyFields.country = country;
+        if (state !== undefined) companyFields.state = state;
+        if (city !== undefined) companyFields.city = city;
+        if (language !== undefined) companyFields.language = language;
+        if (companySize !== undefined) companyFields.companySize = companySize;
         // if (generalSettings) companyFields.generalSettings = generalSettings;
         // if (typeof activeStatus !== 'undefined') companyFields.activeStatus = activeStatus;
         // if (typeof status !== 'undefined') companyFields.status = status;

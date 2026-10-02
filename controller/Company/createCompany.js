@@ -43,8 +43,8 @@ const createCompany = async (req, res) => {
             });
         }
         
-        // Check if company name is already set
-        if (company.companyName) {
+        // Check if company name is already set and completed onboarding
+        if (company.companyName && company.onboardingCompleted) {
             return res.status(400).json({
                 status: 400,
                 success: false,
@@ -105,6 +105,8 @@ const createCompany = async (req, res) => {
                         companyName: companyName.trim(),
                         // subDomain: fullSubdomain,
                         companyAddress: companyAddress || '',
+                        industry: req.body.industry || company.industry || '',
+                        companySize: req.body.companySize || company.companySize || '',
                         generalSettings: generalSettings || {},
                         companyFeatures: {
                             modules: transformedModules,

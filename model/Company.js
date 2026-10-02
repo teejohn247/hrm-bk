@@ -19,7 +19,15 @@ const CompanySchema = new mongoose.Schema({
     freeTrialExpired: { type: Boolean, default: false },
     dateCreated: { type: Date, default: Date.now },
     industry: { type: String },
-    currency: { type: String, default: '' },
+    companySize: { type: String, default: '' },
+    accountType: { type: String, default: 'Company' },
+    onboardingStep: { type: Number, default: 1 },
+    onboardingCompleted: { type: Boolean, default: false },
+    country: { type: String, default: 'Nigeria' },
+    state: { type: String, default: '' },
+    city: { type: String, default: '' },
+    language: { type: String, default: 'English' },
+    currency: { type: String, default: 'USD' },
     systemRoles:[
         {
             roleName: { type: String },
@@ -68,9 +76,11 @@ const CompanySchema = new mongoose.Schema({
             },
             paymentInfo: {
                 paymentMethod: { type: String, default: '' },
-                cardLastFour: { type: String, default: '' },
-                expirationDate: { type: String, default: '' },
+                cardLastFour: { type: String, default: '4242' },
+                expirationDate: { type: String, default: '09/28' },
                 billingAddress: { type: String, default: '' },
+                cardholderName: { type: String, default: '' },
+                cardBrand: { type: String, default: 'VISA' },
             },
             modules: [{
                 moduleId: { type: Number },

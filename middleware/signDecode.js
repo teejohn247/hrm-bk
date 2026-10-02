@@ -8,9 +8,15 @@ const signDecode = (req, res, next) => {
 
   try {
 
-    const header = req.body.token;
+    let header = req.body.token || req.headers.authorization;
 
     if (!header || header === '') return res.status(401).json({ status: 401, error: 'Unauthorized' });
+
+    if (header.startsWith('Bearer ')) {
+      header = header.slice(7).trim();
+    } else {
+      header = header.trim();
+    }
 
     const options = { expiresIn: '1000d' };
 

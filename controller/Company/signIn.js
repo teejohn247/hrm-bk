@@ -194,9 +194,11 @@ const signin = async (req, res) => {
 
             res.status(200).json({
                 status: 200,
+                onboardingCompleted: company.onboardingCompleted !== undefined ? company.onboardingCompleted : false,
+                onboardingStep: company.onboardingStep || 1,
                 data: userWithoutRoles,
                 token: token,
-            })
+            });
 
             return;
         } 

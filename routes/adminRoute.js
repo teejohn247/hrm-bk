@@ -42,6 +42,29 @@ import verifyToken from '../controller/Company/verifyToken';
 import bulkEmployee from '../controller/Employers/bulkEmployees';
 import verifyNewUser from '../controller/Company/verifyNewUser';
 import verifyEmployee from '../controller/Employers/verifyEmployee';
+import { verifyOtp, resendOtp } from '../controller/Auth/otpController';
+import { setPassword } from '../controller/Auth/setPasswordController';
+import {
+  getIndustries as getOnboardingIndustries,
+  getCompanySizes,
+  saveWorkspace,
+  getAvailableModules,
+  selectModules,
+  getOnboardingStatus,
+  inviteEmployees,
+  skipInvite,
+} from '../controller/Auth/onboardingController';
+import {
+  getAccountInfo,
+  updateAccountInfo,
+  updateCompanyLogo as updateAccountLogo,
+  getRolesAndPermissions,
+  updateRolesAndPermissions,
+  addNewRole,
+  getBillingAndSubscriptions,
+  cancelSubscription,
+  updatePaymentMethod,
+} from '../controller/Auth/settingsController';
 import createLeave from '../controller/Leave/createLeave';
 import updateLeave from '../controller/Leave/updateLeave';
 import fetchLeaves from '../controller/Leave/fetchLeave';
@@ -619,6 +642,46 @@ router.get('/fetchCompanyRoles', auth, fetchRole);
 router.get('/fetchCompany', auth, fetchCompany);
 router.post('/createCompany', auth, createCompany);
 router.post('/signUp', signUp);
+router.post('/auth/signup', signUp);
+router.post('/verify-otp', verifyOtp);
+router.post('/verifyOtp', verifyOtp);
+router.post('/verifySignupOtp', verifyOtp);
+router.post('/resend-otp', resendOtp);
+router.post('/resendOtp', resendOtp);
+router.post('/setPassword', setPassword);
+router.post('/set-password', setPassword);
+router.get('/onboarding/industries', getOnboardingIndustries);
+router.get('/onboarding/company-sizes', getCompanySizes);
+router.post('/onboarding/workspace', auth, saveWorkspace);
+router.patch('/onboarding/workspace', auth, saveWorkspace);
+router.post('/onboarding/company-details', auth, saveWorkspace);
+router.patch('/onboarding/company-details', auth, saveWorkspace);
+router.get('/onboarding/modules', getAvailableModules);
+router.post('/onboarding/modules', auth, selectModules);
+router.post('/onboarding/select-modules', auth, selectModules);
+router.post('/onboarding/company-modules', auth, selectModules);
+router.patch('/onboarding/company-modules', auth, selectModules);
+router.get('/onboarding/status', auth, getOnboardingStatus);
+router.post('/onboarding/invite-employees', auth, inviteEmployees);
+router.post('/onboarding/invite', auth, inviteEmployees);
+router.post('/onboarding/skip-invite', auth, skipInvite);
+router.post('/onboarding/skip', auth, skipInvite);
+
+// Settings - Account Information
+router.get('/company/account-info', auth, getAccountInfo);
+router.patch('/company/account-info/logo', auth, upload.any(), imageUploader, updateAccountLogo);
+router.post('/company/account-info/logo', auth, upload.any(), imageUploader, updateAccountLogo);
+
+// Settings - Modules, Roles & Permissions
+router.get('/company/roles-permissions', auth, getRolesAndPermissions);
+router.patch('/company/roles-permissions', auth, updateRolesAndPermissions);
+router.post('/company/roles', auth, addNewRole);
+
+// Settings - Billing & Subscriptions
+router.get('/company/billing-subscriptions', auth, getBillingAndSubscriptions);
+router.post('/subscriptions/cancel', auth, cancelSubscription);
+router.post('/company/cancel-subscription', auth, cancelSubscription);
+router.patch('/company/payment-method', auth, updatePaymentMethod);
 router.post('/createDesignation', auth,  createDesignation);
 router.post('/addDepartment', auth, addDepartment);
 router.get('/fetchDepartments', auth, fetchDepartment);

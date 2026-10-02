@@ -1,48 +1,60 @@
-
 import dotenv from 'dotenv';
 import Company from '../../model/Company';
-import bcrypt from 'bcrypt';
-
-
 
 dotenv.config();
 
-
-
-
-
-
-
 const fetchCompany = async (req, res) => {
-
     try {
-       
-        let company = await Company.findOne({ _id: req.payload.id }, {_id: 1, companyName:1, companyAddress: 1, generalSettings: 1, status: 1, activeStatus:1})
-        console.log({company})
-        if (!company.companyName) {
+        const companyId = req.payload?.id;
+        const email = req.payload?.email;
 
-            res.status(400).json({
-                status: 400,
-                error: 'This account has not registered a company'
-            })
-            return;
+        const company = await Company.findOne({
+            $or: [{ _id: companyId }, { email: email }],
+        });
+
+        if (!company) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                error: 'This account has not registered a company',
+            });
         }
-        
-        res.status(200).json({
+
+        const data = {
+            _id: company._id,
+            companyName: company.companyName || '',
+            email: company.email,
+            superAdminEmail: company.email,
+            dateJoined: company.createdAt || company.dateCreated || new Date(),
+            companyAddress: company.companyAddress || '',
+            country: company.country || 'Nigeria',
+            state: company.state || '',
+            city: company.city || '',
+            language: company.language || 'English',
+            currency: company.currency || 'USD',
+            companyLogo: company.companyLogo || '',
+            industry: company.industry || '',
+            companySize: company.companySize || '',
+            accountType: company.accountType || 'Company',
+            generalSettings: company.generalSettings || {},
+            activeStatus: company.activeStatus,
+            status: company.status,
+            onboardingCompleted: company.onboardingCompleted,
+        };
+
+        return res.status(200).json({
             status: 200,
-            data: company
-        })
-
-
+            success: true,
+            data,
+        });
     } catch (error) {
-        res.status(500).json({
+        console.error('Error in fetchCompany:', error);
+        return res.status(500).json({
             status: 500,
             success: false,
-            error: error
-        })
+            error: error.message || error,
+        });
     }
-}
+};
+
 export default fetchCompany;
-
-
-
