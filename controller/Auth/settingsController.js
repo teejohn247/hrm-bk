@@ -588,71 +588,107 @@ export const getBillingAndSubscriptions = async (req, res) => {
             });
         }
 
-        const dbSubscriptions = await Subscription.find({ companyId: String(company._id) }).sort({ createdAt: -1 });
+        const now = new Date();
+        const accountCreated = company.createdAt || company.dateCreated || new Date();
+        const trialExpiry = new Date(new Date(accountCreated).getTime() + 14 * 24 * 60 * 60 * 1000);
+        const isTrialActive = now <= trialExpiry;
 
-        // Build Current Plan details matching Image 4
-        const subStatus = company.companyFeatures?.subscriptionStatus || {};
-        const paymentInfo = company.companyFeatures?.paymentInfo || {};
+        let dbSubscriptions = await Subscription.find({ companyId: String(company._id) }).sort({ startDate: -1 });
 
-        const activeSub = dbSubscriptions.find(s => s.status === 'active') || dbSubscriptions[0];
+        // If no subscriptions found in DB, create initial Free Trial subscription
+        if (dbSubscriptions.length === 0) {
+            const initialTrial = await Subscription.create({
+                companyName: company.companyName || 'My Company',
+                email: company.email,
+                companyId: String(company._id),
+                subscriptionPlan: 'Free Trial',
+                price: 0,
+                unitPrice: 0,
+                subscriptionCycle: 'biweekly',
+                startDate: accountCreated,
+                endDate: trialExpiry,
+                status: isTrialActive ? 'active' : 'expired',
+                userRange: '1-10',
+                modules: (company.companyFeatures?.modules || []).map((m, idx) => ({
+                    moduleId: m.moduleId || idx + 1,
+                    key: m.key,
+                    moduleName: m.moduleName,
+                    value: m.value || m.key,
+                })),
+            });
+            dbSubscriptions = [initialTrial];
+
+            if (!company.companyFeatures) company.companyFeatures = {};
+            company.companyFeatures.subscriptionStatus = {
+                isActive: isTrialActive,
+                plan: 'Free Trial',
+                currentCycle: '14 Days',
+                startDate: accountCreated,
+                endDate: trialExpiry,
+            };
+            await company.save();
+        } else {
+            // Update statuses based on current date
+            let modified = false;
+            for (const sub of dbSubscriptions) {
+                // If a pending subscription has reached its start date:
+                if (sub.status === 'pending' && new Date(sub.startDate) <= now) {
+                    sub.status = 'active';
+                    await sub.save();
+                    modified = true;
+                }
+                // If an active subscription has passed its end date:
+                if (sub.status === 'active' && sub.endDate && new Date(sub.endDate) < now) {
+                    sub.status = 'expired';
+                    await sub.save();
+                    modified = true;
+                }
+            }
+            if (modified) {
+                dbSubscriptions = await Subscription.find({ companyId: String(company._id) }).sort({ startDate: -1 });
+            }
+        }
+
+        // Active subscription: prefer active paid plan, else active Free Trial, else latest
+        const activePaidSub = dbSubscriptions.find(s => s.status === 'active' && !s.subscriptionPlan.toLowerCase().includes('trial'));
+        const activeTrialSub = dbSubscriptions.find(s => s.status === 'active' && s.subscriptionPlan.toLowerCase().includes('trial'));
+        const pendingSub = dbSubscriptions.find(s => s.status === 'pending');
+        const latestSub = dbSubscriptions[0];
+
+        const activeSub = activePaidSub || activeTrialSub || latestSub;
+        const isTrial = (activeSub?.subscriptionPlan || '').toLowerCase().includes('trial');
 
         const currentPlan = {
-            plan: activeSub?.subscriptionPlan || subStatus.plan || 'Pro',
-            status: (activeSub?.status || (subStatus.isActive ? 'Active' : 'Active')),
-            amount: activeSub ? `$${activeSub.price || 59}/mo` : '$59/mo',
-            billingCycle: activeSub?.subscriptionCycle || subStatus.currentCycle || 'Monthly',
-            startedOn: activeSub?.startDate || subStatus.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            nextRenewal: activeSub?.endDate || subStatus.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            plan: activeSub?.subscriptionPlan || 'Free Trial',
+            status: activeSub?.status ? (activeSub.status.charAt(0).toUpperCase() + activeSub.status.slice(1)) : (isTrialActive ? 'Active' : 'Expired'),
+            amount: activeSub && activeSub.price ? `$${activeSub.price}/mo` : '$0',
+            billingCycle: isTrial ? '14 Days' : (activeSub?.subscriptionCycle ? (activeSub.subscriptionCycle.charAt(0).toUpperCase() + activeSub.subscriptionCycle.slice(1)) : 'Monthly'),
+            startedOn: activeSub?.startDate || accountCreated,
+            nextRenewal: activeSub?.endDate || trialExpiry,
         };
 
-        // Build Credit Card visual details matching Image 4
+        const paymentInfo = company.companyFeatures?.paymentInfo || {};
         const paymentMethod = {
             cardBrand: paymentInfo.cardBrand || 'VISA',
             cardLastFour: paymentInfo.cardLastFour || '4242',
-            cardholderName: paymentInfo.cardholderName || company.companyName || 'Test Company',
+            cardholderName: paymentInfo.cardholderName || company.companyName || 'Company Admin',
             expirationDate: paymentInfo.expirationDate || '09/28',
             billingAddress: paymentInfo.billingAddress || company.companyAddress || '',
             isDefault: true,
         };
 
-        // Build Billing History matching Image 4 table
-        let billingHistory = [];
-
-        if (dbSubscriptions.length > 0) {
-            billingHistory = dbSubscriptions.map(s => ({
+        // Real billing history with NO fake dummy rows
+        const billingHistory = dbSubscriptions.map(s => {
+            const isSubTrial = (s.subscriptionPlan || '').toLowerCase().includes('trial');
+            return {
                 id: s._id,
                 plan: s.subscriptionPlan,
-                amount: `$${s.price || s.unitPrice || 59}`,
-                billingCycle: s.subscriptionCycle ? s.subscriptionCycle.charAt(0).toUpperCase() + s.subscriptionCycle.slice(1) : 'Monthly',
+                amount: `$${s.price || 0}`,
+                billingCycle: isSubTrial ? '14 Days' : (s.subscriptionCycle ? (s.subscriptionCycle.charAt(0).toUpperCase() + s.subscriptionCycle.slice(1)) : 'Monthly'),
                 date: s.startDate,
-                status: s.status ? s.status.charAt(0).toUpperCase() + s.status.slice(1) : 'Active',
-            }));
-        } else {
-            // Default history matching screenshot rows if no DB history yet
-            billingHistory = [
-                {
-                    plan: 'Pro',
-                    amount: '$59',
-                    billingCycle: 'Monthly',
-                    date: new Date('2026-08-01'),
-                    status: 'Active',
-                },
-                {
-                    plan: 'Standard',
-                    amount: '$29',
-                    billingCycle: 'Monthly',
-                    date: new Date('2026-02-01'),
-                    status: 'Expired',
-                },
-                {
-                    plan: 'Free Trial',
-                    amount: '$0',
-                    billingCycle: 'Monthly',
-                    date: new Date('2026-01-01'),
-                    status: 'Expired',
-                },
-            ];
-        }
+                status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1)) : 'Active',
+            };
+        });
 
         return res.status(200).json({
             status: 200,
@@ -661,6 +697,12 @@ export const getBillingAndSubscriptions = async (req, res) => {
                 currentPlan,
                 paymentMethod,
                 billingHistory,
+                pendingPlan: pendingSub ? {
+                    plan: pendingSub.subscriptionPlan,
+                    startDate: pendingSub.startDate,
+                    endDate: pendingSub.endDate,
+                    price: pendingSub.price,
+                } : null,
             },
         });
     } catch (error) {

@@ -215,7 +215,7 @@ function buildDefaultSystemRoles(companyId, companyName, companyModules) {
         })),
     };
 
-    // Manager / Admin: management level access
+    // Manager: nothing checked by default per user specification
     const adminRole = {
         roleName: 'Manager',
         companyId: String(companyId),
@@ -235,13 +235,13 @@ function buildDefaultSystemRoles(companyId, companyName, companyModules) {
                     key: p.key,
                     name: p.name,
                     permissionType: p.permissionType,
-                    value: p.permissionType !== 'delete',
+                    value: false, // Nothing checked by default
                 })),
             })),
         })),
     };
 
-    // Staff / Employee: read and standard submission rights
+    // Staff: nothing checked by default per user specification
     const staffRole = {
         roleName: 'Staff',
         companyId: String(companyId),
@@ -261,7 +261,7 @@ function buildDefaultSystemRoles(companyId, companyName, companyModules) {
                     key: p.key,
                     name: p.name,
                     permissionType: p.permissionType,
-                    value: p.permissionType === 'view' || p.key.includes('view') || p.key.includes('apply'),
+                    value: false, // Nothing checked by default
                 })),
             })),
         })),

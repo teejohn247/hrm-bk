@@ -42,7 +42,7 @@ const subscriptionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'pending', 'expired'],
+    enum: ['active', 'pending', 'expired', 'cancelled'],
     default: 'pending',
   },
   userRange: {

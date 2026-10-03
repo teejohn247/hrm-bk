@@ -74,13 +74,19 @@ const subscribe = async (req, res) => {
     try {
         const { 
             subscriptionPlanId,
-            subscriptionCycle,
-            companyId,
-            userRange
+            planKey,
+            planName,
+            subscriptionCycle = 'monthly',
+            userRange = '1-10'
         } = req.body;
 
-        // Validate required fields and company
-        let company = await Company.findOne({ _id: companyId });
+        const targetCompanyId = req.body.companyId || req.payload?.id || req.decode?.id;
+
+        // Validate company
+        let company = await Company.findOne({
+            $or: [{ _id: targetCompanyId }, { email: req.payload?.email }]
+        });
+
         if (!company) {
             return res.status(404).json({
                 status: 404,
@@ -89,102 +95,102 @@ const subscribe = async (req, res) => {
             });
         }
 
-        // Check for active or pending subscriptions
-        const latestSubscription = await Subscription.findOne({
-            companyId,
-            status: { $in: ['active', 'pending'] }
-        }).sort({ endDate: -1 });  // Get the subscription with the latest end date
+        // Check for currently active subscription (such as active Free Trial)
+        const activeSubscription = await Subscription.findOne({
+            companyId: String(company._id),
+            status: 'active',
+            endDate: { $gt: new Date() }
+        }).sort({ endDate: -1 });
 
-        // Fetch subscription plan
-        const subscriptionPlan = await SubscriptionPlan.findById(subscriptionPlanId);
+        // Find or resolve subscription plan
+        let subscriptionPlan = null;
+        const requestedIdentifier = subscriptionPlanId || planKey || planName;
+
+        if (requestedIdentifier && mongoose.Types.ObjectId.isValid(requestedIdentifier)) {
+            subscriptionPlan = await SubscriptionPlan.findById(requestedIdentifier);
+        }
+
+        if (!subscriptionPlan && requestedIdentifier) {
+            const cleanKey = String(requestedIdentifier).toLowerCase().replace(/[^a-z0-9]/g, '');
+            subscriptionPlan = await SubscriptionPlan.findOne({
+                $or: [
+                    { subscriptionName: new RegExp(cleanKey, 'i') },
+                    { key: cleanKey },
+                    { subscriptionName: new RegExp(String(requestedIdentifier), 'i') }
+                ]
+            });
+        }
+
+        // Fallback default catalog if not in database
         if (!subscriptionPlan) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                errorMessage: 'Subscription plan not found'
-            });
-        }
-
-        // Check Free Trial eligibility
-        if (subscriptionPlan.subscriptionName === 'Free-Trial') {
-            // Get all free trial subscriptions for this company
-            const freeTrialSubscriptions = await Subscription.find({
-                companyId,
-                subscriptionPlan: 'Free-Trial'
-            });
-
-            // Check if any free trial is 2 months or older
-            const twoMonthsAgo = new Date();
-            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-
-            const hasExpiredFreeTrial = freeTrialSubscriptions.some(sub => {
-                return new Date(sub.startDate) <= twoMonthsAgo;
-            });
-
-
-            if (hasExpiredFreeTrial || company.freeTrialExpired) {
-                return res.status(400).json({
-                    status: 400,
-                    success: false,
-                    errorMessage: 'Free trial period has expired. Please choose a different subscription plan.'
-                });
+            const cleanKey = String(requestedIdentifier || 'pro').toLowerCase();
+            let planPrice = 59;
+            let planTitle = 'Pro';
+            if (cleanKey.includes('free') || cleanKey.includes('trial')) {
+                planPrice = 0; planTitle = 'Free Trial';
+            } else if (cleanKey.includes('standard')) {
+                planPrice = 29; planTitle = 'Standard';
+            } else if (cleanKey.includes('premium')) {
+                planPrice = 99; planTitle = 'Premium';
             }
+            subscriptionPlan = {
+                subscriptionName: planTitle,
+                unitPrice: planPrice,
+                modules: [],
+            };
         }
 
-        // Calculate subscription dates
-        const startDate = latestSubscription 
-            ? new Date(latestSubscription.endDate) // Start after latest subscription ends
+        // When they subscribe for another plan, let their free trial expire before that one starts counting:
+        const hasActiveTrialOrPlan = activeSubscription && new Date(activeSubscription.endDate) > new Date();
+        const startDate = hasActiveTrialOrPlan
+            ? new Date(activeSubscription.endDate) // Start after active trial/plan finishes
             : new Date();
         const endDate = new Date(startDate);
         
-        switch (subscriptionCycle) {
+        const cycle = String(subscriptionCycle || 'monthly').toLowerCase();
+        switch (cycle) {
             case 'biweekly':
+            case '14 days':
+            case '14-days':
                 endDate.setDate(endDate.getDate() + 14);
                 break;
-            case 'monthly':
-                endDate.setMonth(endDate.getMonth() + 1);
-                break;
             case 'annually':
+            case 'yearly':
                 endDate.setFullYear(endDate.getFullYear() + 1);
+                break;
+            case 'monthly':
+            default:
+                endDate.setMonth(endDate.getMonth() + 1);
                 break;
         }
 
-        // Fetch all modules from the database
-        const allModules = await Module.find(); // Assuming Module is the correct model to fetch all modules
-
-        // console.log(JSON.stringify(allModules.modules, null, 2)); // Log all nested objects in a readable format
-
-        // Flatten all modules from all elements in allModules
-        const modulesArray = allModules.flatMap(allModule => allModule.modules);
-
-        const updatedModules = subscriptionPlan.modules.map(subscriptionModule => {
-            // Find the matching module from the flattened modulesArray
-            const matchingModule = modulesArray.find(module => module?.moduleId?.toString() === subscriptionModule.moduleId.toString());
-            
-            // Log the matching module for debugging
-            // console.log(JSON.stringify(matchingModule, null, 2)); // Log all nested objects in a readable format
-
-            return matchingModule || subscriptionModule; // Use logical OR to return matchingModule or subscriptionModule
-        });
-
-        // console.log(JSON.stringify({updatedModules}, null, 2)); // Log all nested objects in a readable format
-
-      
-
-        // Create new subscription with appropriate status
+        // Create new subscription with queued status if active trial exists
         const newSubscription = await Subscription.create({
             subscriptionPlan: subscriptionPlan.subscriptionName,
-            unitPrice: subscriptionPlan.unitPrice,
-            subscriptionCycle,
-            modules: updatedModules, // Use the updated modules
-            companyId,
-            companyName: company.name,
+            unitPrice: subscriptionPlan.unitPrice || 0,
+            price: subscriptionPlan.unitPrice || 0,
+            subscriptionCycle: cycle === 'yearly' || cycle === 'annually' ? 'annually' : 'monthly',
+            modules: subscriptionPlan.modules || [],
+            companyId: String(company._id),
+            companyName: company.companyName || company.name || 'Company',
             email: company.email,
             startDate,
             endDate,
             userRange,
-            status: latestSubscription ? 'pending' : 'active'
+            status: hasActiveTrialOrPlan ? 'pending' : 'active'
         });
+
+        if (!hasActiveTrialOrPlan) {
+            if (!company.companyFeatures) company.companyFeatures = {};
+            company.companyFeatures.subscriptionStatus = {
+                isActive: true,
+                plan: subscriptionPlan.subscriptionName,
+                currentCycle: cycle,
+                startDate,
+                endDate,
+            };
+            await company.save();
+        }
 
 
         const test =await updatedModules.map(module => ({
