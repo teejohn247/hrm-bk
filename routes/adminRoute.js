@@ -669,12 +669,16 @@ router.post('/onboarding/skip', auth, skipInvite);
 
 // Settings - Account Information
 router.get('/company/account-info', auth, getAccountInfo);
+router.patch('/company/account-info', auth, updateAccountInfo);
+router.put('/company/account-info', auth, updateAccountInfo);
+router.post('/company/account-info', auth, updateAccountInfo);
 router.patch('/company/account-info/logo', auth, upload.any(), imageUploader, updateAccountLogo);
 router.post('/company/account-info/logo', auth, upload.any(), imageUploader, updateAccountLogo);
 
 // Settings - Modules, Roles & Permissions
 router.get('/company/roles-permissions', auth, getRolesAndPermissions);
 router.patch('/company/roles-permissions', auth, updateRolesAndPermissions);
+router.post('/company/roles-permissions', auth, updateRolesAndPermissions);
 router.post('/company/roles', auth, addNewRole);
 
 // Settings - Billing & Subscriptions
@@ -682,6 +686,7 @@ router.get('/company/billing-subscriptions', auth, getBillingAndSubscriptions);
 router.post('/subscriptions/cancel', auth, cancelSubscription);
 router.post('/company/cancel-subscription', auth, cancelSubscription);
 router.patch('/company/payment-method', auth, updatePaymentMethod);
+router.post('/company/payment-method', auth, updatePaymentMethod);
 router.post('/createDesignation', auth,  createDesignation);
 router.post('/addDepartment', auth, addDepartment);
 router.get('/fetchDepartments', auth, fetchDepartment);
