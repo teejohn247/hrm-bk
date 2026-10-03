@@ -177,6 +177,7 @@ function buildCompanyModules(selectedKeys) {
             key: catalogMod.key,
             moduleName: catalogMod.moduleName,
             value: catalogMod.value,
+            subscribed: isSelected,
             active: isSelected,
             moduleFeatures: mappedFeatures,
         };

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import Company from '../../model/Company';
 import Employee from '../../model/Employees';
 import Subscription from '../../model/Subscriptions';
@@ -226,12 +227,20 @@ export const updateCompanyLogo = async (req, res) => {
 
 export const getRolesAndPermissions = async (req, res) => {
     try {
-        const companyId = req.payload?.id;
+        const companyId = req.payload?.companyId || req.payload?.id;
         const email = req.payload?.email;
 
-        let company = await Company.findOne({
-            $or: [{ _id: companyId }, { email: email }],
-        });
+        const query = [];
+        if (mongoose.isValidObjectId(companyId)) query.push({ _id: companyId });
+        if (email) query.push({ email });
+        let company = query.length > 0 ? await Company.findOne({ $or: query }) : null;
+
+        if (!company && req.payload?.id && mongoose.isValidObjectId(req.payload.id)) {
+            const emp = await Employee.findById(req.payload.id).lean();
+            if (emp?.companyId) {
+                company = await Company.findById(emp.companyId);
+            }
+        }
 
         if (!company) {
             return res.status(404).json({
@@ -252,8 +261,8 @@ export const getRolesAndPermissions = async (req, res) => {
 
         // Build permissions matrix matching Image 3
         const matrix = companyModules.map(mod => {
-            const isSubscribed = true;
-            const isActive = mod.active !== false;
+            const isSubscribed = mod.subscribed === true || (mod.subscribed === undefined && mod.active === true);
+            const isActive = isSubscribed && mod.active !== false;
 
             const features = (mod.moduleFeatures || []).map(feat => {
                 const perms = (feat.featurePermissions || []).map(perm => {
@@ -320,12 +329,20 @@ export const getRolesAndPermissions = async (req, res) => {
 
 export const updateRolesAndPermissions = async (req, res) => {
     try {
-        const companyId = req.payload?.id;
+        const companyId = req.payload?.companyId || req.payload?.id;
         const email = req.payload?.email;
 
-        let company = await Company.findOne({
-            $or: [{ _id: companyId }, { email: email }],
-        });
+        const query = [];
+        if (mongoose.isValidObjectId(companyId)) query.push({ _id: companyId });
+        if (email) query.push({ email });
+        let company = query.length > 0 ? await Company.findOne({ $or: query }) : null;
+
+        if (!company && req.payload?.id && mongoose.isValidObjectId(req.payload.id)) {
+            const emp = await Employee.findById(req.payload.id).lean();
+            if (emp?.companyId) {
+                company = await Company.findById(emp.companyId);
+            }
+        }
 
         if (!company) {
             return res.status(404).json({
@@ -344,16 +361,26 @@ export const updateRolesAndPermissions = async (req, res) => {
                     m => m.key === update.key || String(m.moduleId) === String(update.moduleId) || m.moduleName === update.name
                 );
                 if (mod && typeof update.active === 'boolean') {
+                    if (update.active && mod.subscribed === false) return;
                     mod.active = update.active;
                 }
             });
+            company.markModified('companyFeatures');
         }
 
         // Toggle individual module active status
         if (moduleKey && typeof active === 'boolean') {
             const mod = company.companyFeatures?.modules?.find(m => m.key === moduleKey);
             if (mod) {
+                if (active && mod.subscribed === false) {
+                    return res.status(400).json({
+                        status: 400,
+                        success: false,
+                        error: 'Cannot activate an unsubscribed module',
+                    });
+                }
                 mod.active = active;
+                company.markModified('companyFeatures');
             }
         }
 
@@ -384,7 +411,11 @@ export const updateRolesAndPermissions = async (req, res) => {
             permissionsMatrix.forEach(modData => {
                 const targetMod = company.companyFeatures?.modules?.find(m => m.key === modData.key);
                 if (targetMod && typeof modData.active === 'boolean') {
-                    targetMod.active = modData.active;
+                    if (modData.active && targetMod.subscribed === false) {
+                        // Unsubscribed module cannot be activated
+                    } else {
+                        targetMod.active = modData.active;
+                    }
                 }
 
                 // Update roles
@@ -446,6 +477,8 @@ export const updateRolesAndPermissions = async (req, res) => {
             });
         }
 
+        company.markModified('companyFeatures');
+        company.markModified('systemRoles');
         await company.save();
 
         return res.status(200).json({
@@ -809,6 +842,59 @@ export const updatePaymentMethod = async (req, res) => {
     }
 };
 
+export const getCompanyModulesHandler = async (req, res) => {
+    try {
+        const companyId = req.params?.companyId || req.payload?.companyId || req.payload?.id;
+        const email = req.payload?.email;
+
+        const query = [];
+        if (mongoose.isValidObjectId(companyId)) query.push({ _id: companyId });
+        if (email) query.push({ email });
+        let company = query.length > 0 ? await Company.findOne({ $or: query }) : null;
+
+        if (!company && req.payload?.id && mongoose.isValidObjectId(req.payload.id)) {
+            const emp = await Employee.findById(req.payload.id).lean();
+            if (emp?.companyId) {
+                company = await Company.findById(emp.companyId);
+            }
+        }
+
+        if (!company) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                error: 'Company not found',
+            });
+        }
+
+        const rawModules = company.companyFeatures?.modules || [];
+        const modules = rawModules.map(mod => {
+            const isSubscribed = mod.subscribed === true || (mod.subscribed === undefined && mod.active === true);
+            const isActive = isSubscribed && mod.active !== false;
+            return {
+                moduleId: mod.moduleId,
+                key: mod.key,
+                moduleName: mod.moduleName,
+                value: mod.value,
+                subscribed: isSubscribed,
+                active: isActive,
+            };
+        });
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: modules,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            error: error.message || 'Error fetching company modules',
+        });
+    }
+};
+
 export default {
     getAccountInfo,
     updateAccountInfo,
@@ -819,4 +905,5 @@ export default {
     getBillingAndSubscriptions,
     cancelSubscription,
     updatePaymentMethod,
+    getCompanyModulesHandler,
 };

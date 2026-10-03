@@ -64,6 +64,7 @@ import {
   getBillingAndSubscriptions,
   cancelSubscription,
   updatePaymentMethod,
+  getCompanyModulesHandler,
 } from '../controller/Auth/settingsController';
 import createLeave from '../controller/Leave/createLeave';
 import updateLeave from '../controller/Leave/updateLeave';
@@ -680,6 +681,8 @@ router.get('/company/roles-permissions', auth, getRolesAndPermissions);
 router.patch('/company/roles-permissions', auth, updateRolesAndPermissions);
 router.post('/company/roles-permissions', auth, updateRolesAndPermissions);
 router.post('/company/roles', auth, addNewRole);
+router.get('/company/:companyId/modules', auth, getCompanyModulesHandler);
+router.get('/company/modules', auth, getCompanyModulesHandler);
 
 // Settings - Billing & Subscriptions
 router.get('/company/billing-subscriptions', auth, getBillingAndSubscriptions);

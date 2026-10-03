@@ -88,6 +88,7 @@ const CompanySchema = new mongoose.Schema({
                 moduleName: { type: String },
                 value: { type: String },
                 active: {type: Boolean, default: false},
+                subscribed: {type: Boolean, default: false},
                 moduleFeatures: [{
                     featureId: { type: Number },
                     featureKey: { type: String },
