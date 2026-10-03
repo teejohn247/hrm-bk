@@ -693,6 +693,8 @@ router.post('/company/payment-method', auth, updatePaymentMethod);
 router.post('/createDesignation', auth,  createDesignation);
 router.post('/addDepartment', auth, addDepartment);
 router.get('/fetchDepartments', auth, fetchDepartment);
+router.get('/company/:companyId/departments', auth, fetchDepartment);
+router.get('/company/departments', auth, fetchDepartment);
 router.patch('/updateDepartment/:id',auth, updateDepartment);
 router.delete('/deleteDepartment/:id',auth, deleteDepartment);
 router.post('/addTable', addTable);
@@ -993,6 +995,9 @@ router.delete('/announcements/:id', auth, deleteAnnouncement);
 // Branch routes
 router.post('/branches', auth, createBranch);
 router.get('/branches', auth, fetchBranches);
+router.get('/company/:companyId/branch', auth, fetchBranches);
+router.get('/company/:companyId/branches', auth, fetchBranches);
+router.get('/company/branches', auth, fetchBranches);
 router.get('/branches/:id', auth, fetchBranchById);
 router.patch('/branches/:id', auth, updateBranch);
 router.delete('/branches/:id', auth, deleteBranch);
