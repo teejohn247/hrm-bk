@@ -690,10 +690,17 @@ export const inviteEmployees = async (req, res) => {
                 continue;
             }
 
-            const namePart = empEmail.split('@')[0].replace(/[._-]/g, ' ');
-            const nameTokens = namePart.split(' ').filter(Boolean);
-            const firstName = nameTokens[0] ? nameTokens[0].charAt(0).toUpperCase() + nameTokens[0].slice(1) : 'Invited';
-            const lastName = nameTokens[1] ? nameTokens[1].charAt(0).toUpperCase() + nameTokens[1].slice(1) : 'Member';
+            const matchedObj = rawEmails.find(e => typeof e === 'object' && e !== null && (e.email || e.value)?.toLowerCase().trim() === empEmail);
+            let firstName = matchedObj?.firstName ? String(matchedObj.firstName).trim() : '';
+            let lastName = matchedObj?.lastName ? String(matchedObj.lastName).trim() : '';
+
+            if (!firstName) {
+                const namePart = empEmail.split('@')[0].replace(/[._-]/g, ' ');
+                const nameTokens = namePart.split(' ').filter(Boolean);
+                firstName = nameTokens[0] ? nameTokens[0].charAt(0).toUpperCase() + nameTokens[0].slice(1) : 'Invited';
+                lastName = nameTokens[1] ? nameTokens[1].charAt(0).toUpperCase() + nameTokens[1].slice(1) : '';
+            }
+
             const currentYear = new Date().getFullYear();
             const randomCode = Math.floor(1000 + Math.random() * 9000);
             const employeeCode = `EMP-${currentYear}-${randomCode}`;
@@ -704,7 +711,7 @@ export const inviteEmployees = async (req, res) => {
                 companyName: company.companyName,
                 firstName,
                 lastName,
-                fullName: `${firstName} ${lastName}`,
+                fullName: [firstName, lastName].filter(Boolean).join(' ') || firstName || 'Invited',
                 department: 'General',
                 employmentType: 'Full-time',
                 employeeCode,

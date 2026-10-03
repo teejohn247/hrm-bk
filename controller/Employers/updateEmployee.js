@@ -197,8 +197,8 @@ const updateEmployee = async (req, res) => {
         // Build update object dynamically (only include provided fields)
         const updateFields = {};
         
-        if (firstName) updateFields.firstName = firstName;
-        if (lastName) updateFields.lastName = lastName;
+        if (firstName) updateFields.firstName = typeof firstName === 'string' ? firstName.trim() : firstName;
+        if (lastName !== undefined) updateFields.lastName = typeof lastName === 'string' ? lastName.trim() : lastName;
         if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
         if (gender) updateFields.gender = gender;
         if (address) updateFields.address = address;
@@ -216,14 +216,21 @@ const updateEmployee = async (req, res) => {
         if (nextOfKinPhoneNumber) updateFields.nextOfKinPhoneNumber = nextOfKinPhoneNumber;
         if (nextOfKinRelationship) updateFields.nextOfKinRelationship = nextOfKinRelationship;
         if (paymentInformation) updateFields.paymentInformation = paymentInformation;
+        if (req.body.branch || req.body.companyBranch) updateFields.companyBranch = req.body.branch || req.body.companyBranch;
+        if (req.body.departmentId) updateFields.departmentId = req.body.departmentId;
+        if (req.body.department) updateFields.department = req.body.department;
+        if (req.body.companyRole) updateFields.companyRole = req.body.companyRole;
+        if (req.body.employmentType) updateFields.employmentType = req.body.employmentType;
+        if (req.body.onboardingCompleted !== undefined) {
+            updateFields.onboardingCompleted = req.body.onboardingCompleted === 'true' || req.body.onboardingCompleted === true;
+        }
 
-        // Update fullName if both first and last name are provided
-        if (firstName && lastName) {
-            updateFields.fullName = `${firstName} ${lastName}`;
-        } else if (firstName && employee.lastName) {
-            updateFields.fullName = `${firstName} ${employee.lastName}`;
-        } else if (lastName && employee.firstName) {
-            updateFields.fullName = `${employee.firstName} ${lastName}`;
+        // Update fullName
+        const effectiveFirst = (updateFields.firstName !== undefined ? updateFields.firstName : employee.firstName) || '';
+        const effectiveLast = (updateFields.lastName !== undefined ? updateFields.lastName : employee.lastName) || '';
+        const computedFull = `${effectiveFirst} ${effectiveLast}`.trim();
+        if (computedFull) {
+            updateFields.fullName = computedFull;
         }
 
         // Update employee
@@ -255,6 +262,7 @@ const updateEmployee = async (req, res) => {
         return res.status(200).json({
             status: 200,
             success: true,
+            message: 'Employee updated successfully',
             data: updatedEmployee
         });
 
